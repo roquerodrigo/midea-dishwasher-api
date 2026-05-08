@@ -1,7 +1,6 @@
 """Cliente Python para a lava-louças Midea (device type `0xE1`)."""
 
 from importlib.metadata import PackageNotFoundError, version
-from typing import TYPE_CHECKING, Any
 
 from .client import Client
 from .enums import (
@@ -22,9 +21,7 @@ from .protocol import (
     parse_frame,
 )
 from .state import DishwasherStatus, decode_response
-
-if TYPE_CHECKING:
-    from .transport import OnWireCallback, V3Transport
+from .transport import OnWireCallback, V3Transport
 
 try:
     __version__ = version("midea-dishwasher-api")
@@ -52,12 +49,3 @@ __all__ = [
     "decode_response",
     "parse_frame",
 ]
-
-_LAZY_TRANSPORT_EXPORTS = {"V3Transport", "OnWireCallback"}
-
-
-def __getattr__(name: str) -> Any:
-    if name in _LAZY_TRANSPORT_EXPORTS:
-        from . import transport
-        return getattr(transport, name)
-    raise AttributeError(f"module 'midea_dishwasher_api' has no attribute {name!r}")

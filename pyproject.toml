@@ -1,6 +1,6 @@
 [project]
 name = "midea-dishwasher-api"
-version = "1.0.0"
+version = "1.0.1"
 description = "Cliente Python para lava-louças Midea (device_type 0xE1, plugin v5) — codec do frame AA + transporte LAN V3."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -21,10 +21,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-dependencies = []
+dependencies = ["cryptography>=42"]
 
 [project.optional-dependencies]
-lan = ["cryptography>=42"]
 dev = ["pytest>=8"]
 
 [project.urls]

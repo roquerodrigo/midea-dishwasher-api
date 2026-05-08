@@ -8,12 +8,8 @@ Implementa o protocolo de aplicação `AA … E1` e a camada de transporte LAN V
 ## Instalação
 
 ```bash
-pip install midea-dishwasher-api[lan]
+pip install midea-dishwasher-api
 ```
-
-O extra `lan` instala `cryptography`, necessário para falar diretamente com a
-máquina via LAN. Sem o extra, o pacote ainda expõe o codec do frame e o
-parser de status para uso com transporte próprio (cloud, mock, etc.).
 
 ## Uso rápido
 

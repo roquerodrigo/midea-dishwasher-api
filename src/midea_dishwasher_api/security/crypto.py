@@ -4,13 +4,7 @@ from __future__ import annotations
 
 from hashlib import md5
 
-try:
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-except ImportError as e:  # pragma: no cover
-    raise ImportError(
-        "midea_dishwasher_api.transport precisa de `cryptography` para AES. "
-        "Instale com: uv pip install cryptography"
-    ) from e
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 
 HEADER_LEN = 6
