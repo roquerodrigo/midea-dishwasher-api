@@ -108,23 +108,23 @@ wheels = [
 
 [[package]]
 name = "midea-dishwasher-api"
-version = "0.1.0"
+version = "1.0.1"
 source = { editable = "." }
+dependencies = [
+    { name = "cryptography" },
+]
 
 [package.optional-dependencies]
 dev = [
     { name = "pytest" },
 ]
-lan = [
-    { name = "cryptography" },
-]
 
 [package.metadata]
 requires-dist = [
-    { name = "cryptography", marker = "extra == 'lan'", specifier = ">=42" },
+    { name = "cryptography", specifier = ">=42" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
 ]
-provides-extras = ["lan", "dev"]
+provides-extras = ["dev"]
 
 [[package]]
 name = "packaging"
