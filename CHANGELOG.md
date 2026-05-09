@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.2.0...v1.3.0) (2026-05-09)
+
+
+### Features
+
+* **state:** expose extra_drying flag in DishwasherStatus ([a59cca3](https://github.com/roquerodrigo/midea-dishwasher-api/commit/a59cca3722e0c9403893a87455e9a2fb20a76ddf))
+
 ## [1.2.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.1.0...v1.2.0) (2026-05-09)
 
 
