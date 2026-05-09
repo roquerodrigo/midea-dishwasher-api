@@ -88,6 +88,7 @@ def test_decode_response_status() -> None:
     body[0] = 0x08
     body[1] = 0x03
     body[2] = 0x04  # mode = ECO
+    body[3] = 0x01  # extra_drying ON
     body[5] = 0x01 | 0x02  # bit0 = door_closed; bit1 = bright_lack
     body[6] = 100
     body[9] = 2
@@ -99,12 +100,24 @@ def test_decode_response_status() -> None:
     s = decode_response(frame)
     assert s.cycle_state == CycleState.WORK
     assert s.mode == Mode.ECO
+    assert s.extra_drying is True
     assert s.door_closed is True
     assert s.bright_lack is True
     assert s.left_time == 0x0164
     assert s.wash_stage == WashStage.MAIN_WASH
     assert s.error_code == 1
     assert s.bright == BrightLevel.L4
+
+
+def test_decode_response_extra_drying_off() -> None:
+    body = bytearray(46)
+    body[0] = 0x08
+    body[1] = 0x01
+    body[3] = 0x00  # extra_drying OFF
+    frame = assemble_frame(bytes(body), 0x02)
+
+    s = decode_response(frame)
+    assert s.extra_drying is False
 
 
 def test_decode_response_mode_zero_means_no_program() -> None:

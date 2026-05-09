@@ -21,6 +21,7 @@ class DishwasherStatus:
     machine_state: MachineState | None = None
     cycle_state: CycleState | None = None
     mode: Mode | int | None = None
+    extra_drying: bool = False
     wash_stage: WashStage | int | None = None
     error_code: ErrorCode | int = ErrorCode.NONE
     left_time: int | None = None

@@ -16,6 +16,7 @@ from .dishwasher_status import DishwasherStatus
 
 _OFFSET_CYCLE_STATE = 1
 _OFFSET_MODE = 2
+_OFFSET_EXTRA_DRYING = 3
 _OFFSET_FLAGS5 = 5
 _OFFSET_LEFT_TIME_LOW = 6
 _OFFSET_WASH_STAGE = 9
@@ -52,6 +53,9 @@ def _decode_body(body: bytes, status: DishwasherStatus) -> None:
 
     if (md := _byte_at(body, _OFFSET_MODE)) is not None:
         status.mode = Mode.from_byte(md)
+
+    if (ed := _byte_at(body, _OFFSET_EXTRA_DRYING)) is not None:
+        status.extra_drying = bool(ed)
 
     flags5 = _byte_at(body, _OFFSET_FLAGS5) or 0
     status.door_closed = bool(flags5 & _FLAG_DOOR_CLOSED)

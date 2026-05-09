@@ -62,6 +62,7 @@ Campos decodificados da resposta:
 - `cycle_state: CycleState | None` — `idle`, `order`, `work`, `error`, ...
 - `mode: Mode | int | None` — programa em execução; `None` quando nenhum (`0x00`),
   `int` para bytes de programa que ainda não foram catalogados no enum
+- `extra_drying: bool` — flag "secagem extra" do programa atual
 - `wash_stage: WashStage | int | None` — `IDLE`, `PRE_WASH`, `MAIN_WASH`, `RINSE`, `DRY`, `FINISH`
 - `error_code: ErrorCode | int` — `NONE`, `WATER_SUPPLY`, `HEATING`, `OVERFLOW`, `WATER_VALVE`
 - `left_time: int | None` — minutos restantes (preenchido apenas quando `cycle_state == WORK`)
