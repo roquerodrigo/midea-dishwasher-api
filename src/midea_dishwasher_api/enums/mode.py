@@ -33,6 +33,12 @@ class Mode(StrEnum):
         except ValueError:
             return 0x00
 
+    @classmethod
+    def from_byte(cls, byte: int) -> "Mode | int | None":
+        if byte == 0x00:
+            return None
+        return _BYTE_TO_MODE.get(byte, byte)
+
 
 _MODE_TO_BYTE: dict[Mode, int] = {
     Mode.AUTO: 0x01,
@@ -50,3 +56,5 @@ _MODE_TO_BYTE: dict[Mode, int] = {
     Mode.HYGIENE: 0x0F,
     Mode.FRUIT: 0x13,
 }
+
+_BYTE_TO_MODE: dict[int, Mode] = {byte: mode for mode, byte in _MODE_TO_BYTE.items()}

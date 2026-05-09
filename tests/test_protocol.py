@@ -87,6 +87,7 @@ def test_decode_response_status() -> None:
     body = bytearray(46)
     body[0] = 0x08
     body[1] = 0x03
+    body[2] = 0x04  # mode = ECO
     body[5] = 0x01 | 0x02  # bit0 = door_closed; bit1 = bright_lack
     body[6] = 100
     body[9] = 2
@@ -97,12 +98,35 @@ def test_decode_response_status() -> None:
 
     s = decode_response(frame)
     assert s.cycle_state == CycleState.WORK
+    assert s.mode == Mode.ECO
     assert s.door_closed is True
     assert s.bright_lack is True
     assert s.left_time == 0x0164
     assert s.wash_stage == WashStage.MAIN_WASH
     assert s.error_code == 1
     assert s.bright == BrightLevel.L4
+
+
+def test_decode_response_mode_zero_means_no_program() -> None:
+    body = bytearray(46)
+    body[0] = 0x08
+    body[1] = 0x01  # cancel
+    body[2] = 0x00  # mode = null
+    frame = assemble_frame(bytes(body), 0x02)
+
+    s = decode_response(frame)
+    assert s.mode is None
+
+
+def test_decode_response_mode_unknown_byte_passes_through() -> None:
+    body = bytearray(46)
+    body[0] = 0x08
+    body[1] = 0x01
+    body[2] = 0x10  # self_clean — not in our enum yet
+    frame = assemble_frame(bytes(body), 0x02)
+
+    s = decode_response(frame)
+    assert s.mode == 0x10
 
 
 def test_decode_response_bright_unknown_byte_passes_through() -> None:

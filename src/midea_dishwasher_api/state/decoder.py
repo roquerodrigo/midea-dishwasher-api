@@ -7,6 +7,7 @@ from ..enums import (
     CycleState,
     ErrorCode,
     MachineState,
+    Mode,
     MsgType,
     WashStage,
 )
@@ -14,6 +15,7 @@ from ..protocol import parse_frame
 from .dishwasher_status import DishwasherStatus
 
 _OFFSET_CYCLE_STATE = 1
+_OFFSET_MODE = 2
 _OFFSET_FLAGS5 = 5
 _OFFSET_LEFT_TIME_LOW = 6
 _OFFSET_WASH_STAGE = 9
@@ -47,6 +49,9 @@ def _decode_body(body: bytes, status: DishwasherStatus) -> None:
     if (cs := _byte_at(body, _OFFSET_CYCLE_STATE)) is not None:
         status.cycle_state = CycleState.from_byte(cs)
         status.machine_state = MachineState.from_byte(cs)
+
+    if (md := _byte_at(body, _OFFSET_MODE)) is not None:
+        status.mode = Mode.from_byte(md)
 
     flags5 = _byte_at(body, _OFFSET_FLAGS5) or 0
     status.door_closed = bool(flags5 & _FLAG_DOOR_CLOSED)
