@@ -65,6 +65,7 @@ Campos decodificados da resposta:
 - `left_time: int | None` — minutos restantes (preenchido apenas quando `cycle_state == WORK`)
 - `door_closed: bool`
 - `bright_lack: bool` — secante (rinse aid) acabou
+- `bright: BrightLevel | int | None` — nível atual do abrilhantador (1–5)
 
 ### Modos disponíveis (`Mode`)
 
@@ -77,11 +78,18 @@ Campos decodificados da resposta:
 testes com transporte mock, integração com cloud, ou pipeline próprio:
 
 ```python
+from midea_dishwasher_api.protocol import assemble_frame
+
 def fake_send(frame: bytes) -> bytes:
     return assemble_frame(b"...", 0x02)
 
 client = Client(send=fake_send)
 ```
+
+O codec low-level (`assemble_frame`, `parse_frame`, `build_query`,
+`build_control`, `make_sum`) e o decoder de status (`decode_response`)
+ficam em `midea_dishwasher_api.protocol` e `midea_dishwasher_api.state`
+respectivamente — fora do `__init__.py` público.
 
 ## Como obter `token` e `key`
 

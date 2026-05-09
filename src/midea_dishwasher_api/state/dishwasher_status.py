@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..enums import CycleState, ErrorCode, MachineState, WashStage
+from ..enums import BrightLevel, CycleState, ErrorCode, MachineState, WashStage
 
 
 @dataclass(slots=True)
@@ -18,3 +18,4 @@ class DishwasherStatus:
     left_time: int | None = None
     door_closed: bool = False
     bright_lack: bool = False
+    bright: BrightLevel | int | None = None

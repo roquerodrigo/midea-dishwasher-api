@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from ..enums import CycleState, ErrorCode, MachineState, MsgType, WashStage
+from ..enums import (
+    BrightLevel,
+    CycleState,
+    ErrorCode,
+    MachineState,
+    MsgType,
+    WashStage,
+)
 from ..protocol import parse_frame
 from .dishwasher_status import DishwasherStatus
 
@@ -11,6 +18,7 @@ _OFFSET_FLAGS5 = 5
 _OFFSET_LEFT_TIME_LOW = 6
 _OFFSET_WASH_STAGE = 9
 _OFFSET_ERROR_CODE = 10
+_OFFSET_BRIGHT = 24
 _OFFSET_LEFT_TIME_HIGH = 32
 
 _FLAG_DOOR_CLOSED = 0x01
@@ -49,6 +57,9 @@ def _decode_body(body: bytes, status: DishwasherStatus) -> None:
 
     if (ec := _byte_at(body, _OFFSET_ERROR_CODE)) is not None:
         status.error_code = ErrorCode.from_byte(ec)
+
+    if (br := _byte_at(body, _OFFSET_BRIGHT)) is not None:
+        status.bright = BrightLevel.from_byte(br)
 
     if status.cycle_state == CycleState.WORK:
         status.left_time = _decode_left_time(body)

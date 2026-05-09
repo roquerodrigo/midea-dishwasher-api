@@ -5,17 +5,19 @@ from __future__ import annotations
 from midea_dishwasher_api import (
     BrightLevel,
     Client,
+    CycleState,
     DishwasherStatus,
     Mode,
     WashStage,
-    CycleState,
+)
+from midea_dishwasher_api.protocol import (
     assemble_frame,
     build_control,
     build_query,
-    decode_response,
+    make_sum,
     parse_frame,
 )
-from midea_dishwasher_api.protocol import make_sum
+from midea_dishwasher_api.state import decode_response
 
 
 def test_make_sum_matches_lua_two_complement() -> None:
@@ -89,6 +91,7 @@ def test_decode_response_status() -> None:
     body[6] = 100
     body[9] = 2
     body[10] = 1
+    body[24] = 4  # bright level
     body[32] = 1
     frame = assemble_frame(bytes(body), 0x02)
 
@@ -99,6 +102,28 @@ def test_decode_response_status() -> None:
     assert s.left_time == 0x0164
     assert s.wash_stage == WashStage.MAIN_WASH
     assert s.error_code == 1
+    assert s.bright == BrightLevel.L4
+
+
+def test_decode_response_bright_unknown_byte_passes_through() -> None:
+    body = bytearray(46)
+    body[0] = 0x08
+    body[1] = 0x01
+    body[24] = 99  # outside the 1-5 enum range
+    frame = assemble_frame(bytes(body), 0x02)
+
+    s = decode_response(frame)
+    assert s.bright == 99
+
+
+def test_decode_response_bright_absent_when_body_short() -> None:
+    body = bytearray(20)  # shorter than offset 24
+    body[0] = 0x08
+    body[1] = 0x01
+    frame = assemble_frame(bytes(body), 0x02)
+
+    s = decode_response(frame)
+    assert s.bright is None
 
 
 def test_client_uses_transport() -> None:
