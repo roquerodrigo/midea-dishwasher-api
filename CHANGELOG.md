@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.0...v1.3.1) (2026-05-12)
+
+
+### Documentation
+
+* standardize CODE_STYLE.md template ([ccee432](https://github.com/roquerodrigo/midea-dishwasher-api/commit/ccee432802c589f704554012cca926e293f5873b))
+* standardize CODE_STYLE.md template ([f2ea70e](https://github.com/roquerodrigo/midea-dishwasher-api/commit/f2ea70e86216e31ddcc9e415a12bde65861e6027))
+
 ## [1.3.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.2.0...v1.3.0) (2026-05-09)
 
 
