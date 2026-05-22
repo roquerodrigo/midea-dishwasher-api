@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 
 from midea_dishwasher_api import build_query
-from midea_dishwasher_api.protocol import HEADER_LEN, parse_frame
+from midea_dishwasher_api.protocol import parse_frame
 from midea_dishwasher_api.transport import V3Transport
 
 

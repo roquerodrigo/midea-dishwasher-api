@@ -14,7 +14,7 @@ class CycleState(StrEnum):
     SOFT_GEAR = "soft_gear"
 
     @classmethod
-    def from_byte(cls, byte: int) -> "CycleState | None":
+    def from_byte(cls, byte: int) -> CycleState | None:
         return _BYTE_TO_CYCLE_STATE.get(byte)
 
 

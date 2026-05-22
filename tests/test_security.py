@@ -11,30 +11,26 @@ from midea_dishwasher_api.security import (
     HEADER_LEN,
     PACKET_ID_LEN,
     SIGN_LEN,
-    Security,
     TYPE_ENCRYPTED_REQUEST,
     TYPE_ENCRYPTED_RESPONSE,
     TYPE_HANDSHAKE_REQUEST,
-    TYPE_HANDSHAKE_RESPONSE,
     V2_ENC_KEY,
     V2_HEADER_LEN,
-    V2_SIGN_LEN,
     V2_SIGN_KEY,
+    V2_SIGN_LEN,
+    Security,
     V3Error,
     aes_cbc_encrypt,
     v2_pack,
     v2_unpack,
 )
 
-
 DEVICE_ID = 151732606394621
 TOKEN = bytes.fromhex(
     "ce02074c2489ecd0a77d0116526490354203f34443cf1d64eadeffb0c070335d"
     "0b663a9d8642a2628b287de9ce3da93a11eac19f3d16009a65f1ddad0e2a8328"
 )
-KEY = bytes.fromhex(
-    "ab02a6952e5647c5bf0253d2b06f8e68687a2a2b5b3641e4bfee81d3f6291475"
-)
+KEY = bytes.fromhex("ab02a6952e5647c5bf0253d2b06f8e68687a2a2b5b3641e4bfee81d3f6291475")
 
 
 def test_handshake_packet_layout() -> None:
@@ -45,7 +41,7 @@ def test_handshake_packet_layout() -> None:
     assert (pkt[2] << 8) | pkt[3] == 64
     assert pkt[4] == 0x20
     assert pkt[5] == TYPE_HANDSHAKE_REQUEST
-    assert pkt[HEADER_LEN + PACKET_ID_LEN:] == TOKEN
+    assert pkt[HEADER_LEN + PACKET_ID_LEN :] == TOKEN
 
 
 def test_authenticate_with_valid_handshake_response() -> None:
@@ -55,7 +51,7 @@ def test_authenticate_with_valid_handshake_response() -> None:
     fake = b"\x83\x70" + (64).to_bytes(2, "big") + b"\x20\x01" + b"\x00\x00" + body
     sec.authenticate(fake, KEY)
     assert sec.tcp_key is not None
-    assert sec.tcp_key == bytes(p ^ k for p, k in zip(plain, KEY))
+    assert sec.tcp_key == bytes(p ^ k for p, k in zip(plain, KEY, strict=False))
 
 
 def test_authenticate_rejects_bad_signature() -> None:
@@ -91,18 +87,17 @@ def test_v3_encode_pad_and_size() -> None:
 
 
 def test_v3_encode_decode_roundtrip() -> None:
-    """Roundtrip ‘fingindo ser device': cliente codifica como REQ, simulamos
+    """Roundtrip 'fingindo ser device': cliente codifica como REQ, simulamos
     o device alterando type para RESP e regerando o sign sobre o NOVO header."""
     from midea_dishwasher_api.security import aes_cbc_decrypt
+
     sec = _establish_session()
     data = b"\xaa\x0b\xe1" + b"\x00" * 8 + b"\x03\x00\x11"
     pkt = sec.encode(data)
     pad = (pkt[5] >> 4) & 0xF
     flipped = bytearray(pkt)
     flipped[5] = (pad << 4) | TYPE_ENCRYPTED_RESPONSE
-    plaintext = aes_cbc_decrypt(
-        bytes(flipped[HEADER_LEN:-SIGN_LEN]), sec.tcp_key, b"\x00" * 16
-    )
+    plaintext = aes_cbc_decrypt(bytes(flipped[HEADER_LEN:-SIGN_LEN]), sec.tcp_key, b"\x00" * 16)
     flipped[-SIGN_LEN:] = sha256(bytes(flipped[:HEADER_LEN]) + plaintext).digest()
     msg_type, body = sec.decode(bytes(flipped))
     assert msg_type == TYPE_ENCRYPTED_RESPONSE

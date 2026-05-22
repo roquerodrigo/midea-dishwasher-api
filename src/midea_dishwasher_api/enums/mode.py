@@ -34,7 +34,7 @@ class Mode(StrEnum):
             return 0x00
 
     @classmethod
-    def from_byte(cls, byte: int) -> "Mode | int | None":
+    def from_byte(cls, byte: int) -> Mode | int | None:
         if byte == 0x00:
             return None
         return _BYTE_TO_MODE.get(byte, byte)

@@ -6,7 +6,6 @@ from hashlib import md5
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-
 HEADER_LEN = 6
 SIGN_LEN = 32
 PACKET_ID_LEN = 2

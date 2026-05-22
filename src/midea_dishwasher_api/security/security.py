@@ -79,7 +79,7 @@ class Security:
             raise V3Error(f"handshake response too short: {len(response)} bytes")
         if response[:2] != b"\x83\x70":
             raise V3Error(f"bad magic: {response[:2].hex()}")
-        body = response[HEADER_LEN + PACKET_ID_LEN:]
+        body = response[HEADER_LEN + PACKET_ID_LEN :]
         if len(body) < 64:
             raise V3Error(f"handshake body too short: {len(body)}")
         if len(key) != 32:
@@ -89,7 +89,7 @@ class Security:
         plain = aes_cbc_decrypt(payload, key, b"\x00" * 16)
         if sha256(plain).digest() != sign:
             raise V3Error("handshake signature mismatch — wrong key?")
-        self.tcp_key = bytes(p ^ k for p, k in zip(plain, key))
+        self.tcp_key = bytes(p ^ k for p, k in zip(plain, key, strict=False))
 
     def encode(self, data: bytes) -> bytes:
         if self.tcp_key is None:
@@ -100,11 +100,7 @@ class Security:
         byte5 = (pad << 4) | TYPE_ENCRYPTED_REQUEST
         header = build_header(size, byte5)
 
-        plaintext_payload = (
-            self._next_packet_id_bytes()
-            + data
-            + (urandom(pad) if pad else b"")
-        )
+        plaintext_payload = self._next_packet_id_bytes() + data + (urandom(pad) if pad else b"")
         ciphertext = aes_cbc_encrypt(plaintext_payload, self.tcp_key, b"\x00" * 16)
         sign = sha256(header + plaintext_payload).digest()
         return header + ciphertext + sign
@@ -133,9 +129,7 @@ class Security:
             sign = packet[-SIGN_LEN:]
             ciphertext = packet[HEADER_LEN:-SIGN_LEN]
             if len(ciphertext) % 16:
-                raise V3Error(
-                    f"ciphertext not 16-aligned: {len(ciphertext)} bytes"
-                )
+                raise V3Error(f"ciphertext not 16-aligned: {len(ciphertext)} bytes")
             plaintext = aes_cbc_decrypt(ciphertext, self.tcp_key, b"\x00" * 16)
             expected_sign = sha256(packet[:HEADER_LEN] + plaintext).digest()
             if expected_sign != sign:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import md5
 
 from .crypto import (
@@ -20,17 +20,19 @@ from .v3_error import V3Error
 
 def _v2_timestamp() -> bytes:
     """Timestamp do V2: 8 bytes BCD-ish YYYYMMDDhhmmssXX (centiseconds)."""
-    now = datetime.now(timezone.utc)
-    return bytes([
-        now.microsecond // 10000,
-        now.second,
-        now.minute,
-        now.hour,
-        now.day,
-        now.month,
-        now.year % 100,
-        now.year // 100,
-    ])
+    now = datetime.now(UTC)
+    return bytes(
+        [
+            now.microsecond // 10000,
+            now.second,
+            now.minute,
+            now.hour,
+            now.day,
+            now.month,
+            now.year % 100,
+            now.year // 100,
+        ]
+    )
 
 
 def v2_pack(device_id: int, frame: bytes) -> bytes:

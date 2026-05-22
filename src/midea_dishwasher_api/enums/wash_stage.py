@@ -14,7 +14,7 @@ class WashStage(IntEnum):
     FINISH = 5
 
     @classmethod
-    def from_byte(cls, byte: int) -> "WashStage | int":
+    def from_byte(cls, byte: int) -> WashStage | int:
         try:
             return cls(byte)
         except ValueError:

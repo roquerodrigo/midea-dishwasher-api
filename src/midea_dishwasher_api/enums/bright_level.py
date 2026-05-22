@@ -13,7 +13,7 @@ class BrightLevel(IntEnum):
     L5 = 5
 
     @classmethod
-    def from_byte(cls, byte: int) -> "BrightLevel | int":
+    def from_byte(cls, byte: int) -> BrightLevel | int:
         try:
             return cls(byte)
         except ValueError:

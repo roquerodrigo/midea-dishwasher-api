@@ -4,19 +4,22 @@ from __future__ import annotations
 
 import logging
 import socket
-from types import TracebackType
-from typing import Callable, Self
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Self
 
 from ..security import (
     HEADER_LEN,
     PACKET_ID_LEN,
-    Security,
     TYPE_ENCRYPTED_RESPONSE,
     TYPE_HANDSHAKE_RESPONSE,
+    Security,
     V3Error,
     v2_pack,
     v2_unpack,
 )
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 log: logging.Logger = logging.getLogger("midea_dishwasher_api.transport")
 
@@ -71,9 +74,7 @@ class V3Transport:
 
     def connect(self) -> None:
         log.debug("connecting to %s:%d", self.host, self.port)
-        self._sock = socket.create_connection(
-            (self.host, self.port), timeout=self._timeout
-        )
+        self._sock = socket.create_connection((self.host, self.port), timeout=self._timeout)
         self._handshake()
 
     def close(self) -> None:
@@ -108,9 +109,7 @@ class V3Transport:
         self._on_wire("RX", packet)
         msg_type, _body = self._security.decode(packet)
         if msg_type != TYPE_HANDSHAKE_RESPONSE:
-            raise V3Error(
-                f"expected handshake response (type=1), got type=0x{msg_type:x}"
-            )
+            raise V3Error(f"expected handshake response (type=1), got type=0x{msg_type:x}")
         self._security.authenticate(packet, self._key)
         log.info("V3 session established with %s", self.host)
 
@@ -133,8 +132,6 @@ class V3Transport:
         while len(buf) < n:
             chunk = self._sock.recv(n - len(buf))
             if not chunk:
-                raise V3Error(
-                    f"connection closed after {len(buf)}/{n} bytes"
-                )
+                raise V3Error(f"connection closed after {len(buf)}/{n} bytes")
             buf.extend(chunk)
         return bytes(buf)
