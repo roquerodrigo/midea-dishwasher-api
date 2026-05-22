@@ -13,7 +13,7 @@ class ErrorCode(IntEnum):
     WATER_VALVE = 4
 
     @classmethod
-    def from_byte(cls, byte: int) -> "ErrorCode | int":
+    def from_byte(cls, byte: int) -> ErrorCode | int:
         try:
             return cls(byte)
         except ValueError:

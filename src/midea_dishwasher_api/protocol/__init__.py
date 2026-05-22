@@ -15,12 +15,12 @@ from .frame_error import FrameError
 
 __all__ = [
     "CONTROL_BODY_LEN",
-    "ControlPayload",
     "DEVICE_TYPE",
-    "FrameError",
     "HEADER_LEN",
     "QUERY_BODY",
     "SYNC",
+    "ControlPayload",
+    "FrameError",
     "assemble_frame",
     "build_control",
     "build_query",

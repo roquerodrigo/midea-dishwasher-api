@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from .enums import BrightLevel, Mode
 from .protocol import ControlPayload, build_control, build_query
@@ -28,11 +28,13 @@ class Client:
         self._control({"machine_state": "cancel"})
 
     def start_to_work(self, mode: Mode, extra_drying: bool = False) -> None:
-        self._control({
-            "mode": str(mode),
-            "machine_state": "work",
-            "additional": 1 if extra_drying else 0,
-        })
+        self._control(
+            {
+                "mode": str(mode),
+                "machine_state": "work",
+                "additional": 1 if extra_drying else 0,
+            }
+        )
 
     def set_bright(self, level: BrightLevel) -> None:
         self._control({"bright": int(BrightLevel(level))})

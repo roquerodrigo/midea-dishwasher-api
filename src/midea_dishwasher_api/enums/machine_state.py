@@ -8,5 +8,5 @@ class MachineState(StrEnum):
     POWER_OFF = "power_off"
 
     @classmethod
-    def from_byte(cls, byte: int) -> "MachineState":
+    def from_byte(cls, byte: int) -> MachineState:
         return cls.POWER_OFF if byte == 0x00 else cls.POWER_ON

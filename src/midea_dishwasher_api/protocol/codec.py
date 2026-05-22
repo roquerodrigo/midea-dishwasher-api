@@ -14,6 +14,7 @@ class ControlPayload(TypedDict, total=False):
     additional: int
     bright: int
 
+
 SYNC = 0xAA
 DEVICE_TYPE = 0xE1
 HEADER_LEN = 10
@@ -71,9 +72,7 @@ def parse_frame(frame: bytes) -> tuple[int, bytes]:
         raise FrameError(f"declared length {declared} != actual {len(frame)}")
     expected = make_sum(frame, 1, len(frame) - 2)
     if expected != frame[-1]:
-        raise FrameError(
-            f"checksum mismatch: got 0x{frame[-1]:02x}, expected 0x{expected:02x}"
-        )
+        raise FrameError(f"checksum mismatch: got 0x{frame[-1]:02x}, expected 0x{expected:02x}")
     return frame[9], bytes(frame[HEADER_LEN:-1])
 
 
