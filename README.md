@@ -1,5 +1,8 @@
 # midea-dishwasher-api
 
+[![CI](https://github.com/roquerodrigo/midea-dishwasher-api/actions/workflows/ci.yml/badge.svg)](https://github.com/roquerodrigo/midea-dishwasher-api/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/midea-dishwasher-api)](https://pypi.org/project/midea-dishwasher-api/)
+
 Cliente Python para lava-louças Midea (`device_type 0xE1`, plugin v5).
 
 Implementa o protocolo de aplicação `AA … E1` e a camada de transporte LAN V3
