@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.2](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.1...v1.3.2) (2026-05-25)
+
+
+### Documentation
+
+* add CI and PyPI badges ([48ea5ad](https://github.com/roquerodrigo/midea-dishwasher-api/commit/48ea5ad4d806522649c3bcd19aee6ffefbfce47c))
+* add CI and PyPI badges ([e1764c3](https://github.com/roquerodrigo/midea-dishwasher-api/commit/e1764c3e0fed2aa67febe0f032f80bd68c25c09c))
+
 ## [1.3.1](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.0...v1.3.1) (2026-05-22)
 
 
