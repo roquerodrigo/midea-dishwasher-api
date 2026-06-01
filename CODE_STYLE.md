@@ -195,7 +195,7 @@ generate `CHANGELOG.md`:
 ## Testing
 
 - Tests live in `tests/`. `uv run pytest` runs the suite. Coverage is gated
-  at **95%** (`--cov-fail-under=95`); keep protocol/codec/transport layers at
+  at **90%** (`--cov-fail-under=90`); keep protocol/codec/transport layers at
   or near 100% since they're the byte-level surface most likely to regress
   silently.
 - Hardware-dependent tests (real device connections) are gated behind an
