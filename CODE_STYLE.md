@@ -194,9 +194,10 @@ generate `CHANGELOG.md`:
 
 ## Testing
 
-- Tests live in `tests/`. `uv run pytest` runs the suite. Aim for high
-  coverage on protocol/codec/transport layers since they're the
-  byte-level surface most likely to regress silently.
+- Tests live in `tests/`. `uv run pytest` runs the suite. Coverage is gated
+  at **95%** (`--cov-fail-under=95`); keep protocol/codec/transport layers at
+  or near 100% since they're the byte-level surface most likely to regress
+  silently.
 - Hardware-dependent tests (real device connections) are gated behind an
   env var and skipped in CI; pure unit tests use captured byte fixtures.
 

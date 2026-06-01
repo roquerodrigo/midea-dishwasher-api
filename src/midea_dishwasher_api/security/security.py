@@ -80,7 +80,8 @@ class Security:
         if response[:2] != b"\x83\x70":
             raise V3Error(f"bad magic: {response[:2].hex()}")
         body = response[HEADER_LEN + PACKET_ID_LEN :]
-        if len(body) < 64:
+        # Defensive: the length guard above already guarantees len(body) >= 64.
+        if len(body) < 64:  # pragma: no cover
             raise V3Error(f"handshake body too short: {len(body)}")
         if len(key) != 32:
             raise V3Error(f"key must be 32 bytes (got {len(key)})")
