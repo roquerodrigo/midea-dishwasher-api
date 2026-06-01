@@ -179,7 +179,8 @@ generate `CHANGELOG.md`:
   footer.
 - Public dependencies: keep them minimal and use `>=` lower bounds, not
   pins. The SDK is meant to coexist with arbitrary downstream resolvers.
-- The `[project.optional-dependencies] dev` group carries test-only deps.
+- The `[dependency-groups]` `dev` and `lint` groups carry the test-only and
+  lint-only deps respectively.
 - A `py.typed` marker ships in the wheel so consumers see type info.
 
 ## Releasing
