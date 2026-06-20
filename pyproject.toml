@@ -21,7 +21,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-dependencies = ["cryptography==48.0.0"]
+dependencies = ["cryptography==48.0.1"]
 
 [project.urls]
 Homepage = "https://github.com/roquerodrigo/midea-dishwasher-api"
