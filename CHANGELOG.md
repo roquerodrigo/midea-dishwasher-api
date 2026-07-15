@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.4](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.3...v1.3.4) (2026-07-13)
+
+
+### Bug Fixes
+
+* relax cryptography pin to a range for HA compatibility ([58ee86e](https://github.com/roquerodrigo/midea-dishwasher-api/commit/58ee86eae193d2ac06e2bcb42eced49f928c0890))
+* relax cryptography pin to a range for Home Assistant compatibility ([756463f](https://github.com/roquerodrigo/midea-dishwasher-api/commit/756463f527392a3b3c4012857fd8a11141e623bd))
+
 ## [1.3.3](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.2...v1.3.3) (2026-06-21)
 
 
