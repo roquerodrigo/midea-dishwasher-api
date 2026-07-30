@@ -72,6 +72,9 @@ line-length = 100
 src = ["src", "tests"]
 exclude = ["scripts"]
 
+[tool.ruff.format]
+exclude = ["*.md"]  # ruff 0.16 formats Python blocks in Markdown; docs keep their own layout
+
 [tool.ruff.lint]
 select = [
     "E",
