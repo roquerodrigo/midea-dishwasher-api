@@ -1,4 +1,4 @@
-"""Modos de lavagem suportados pela máquina (byte 2 do controle 0x08)."""
+"""Wash programs the machine supports (byte 2 of the 0x08 control frame)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,8 @@ from enum import StrEnum
 
 
 class Mode(StrEnum):
+    """Wash program selected on the machine."""
+
     AUTO = "auto"
     INTENSIVE = "intensive"
     NORMAL = "normal"
@@ -22,10 +24,12 @@ class Mode(StrEnum):
     FRUIT = "fruit"
 
     def to_byte(self) -> int:
+        """Return the control byte for this program."""
         return _MODE_TO_BYTE[self]
 
     @classmethod
     def byte_for(cls, mode: str | None) -> int:
+        """Return the control byte of a program name, or 0x00 when unknown."""
         if mode is None:
             return 0x00
         try:
@@ -35,6 +39,7 @@ class Mode(StrEnum):
 
     @classmethod
     def from_byte(cls, byte: int) -> Mode | int | None:
+        """Return the program for a status byte, None for "no program", or the byte."""
         if byte == 0x00:
             return None
         return _BYTE_TO_MODE.get(byte, byte)

@@ -1,8 +1,8 @@
-"""Testes do transporte LAN V3 com socket falso (sem rede/hardware real).
+"""LAN V3 transport tests, driven by a fake socket instead of a device.
 
-Os frames de resposta são construídos byte-a-byte da mesma forma que o device
-real responderia: handshake response 8370 type=1 e ENC_RESP type=3 contendo um
-frame V2 (5A5A) que embrulha o frame AA da aplicação.
+The responses are assembled byte by byte exactly as a real machine answers:
+an 8370 handshake response (type=1) and an ENC_RESP (type=3) carrying a V2
+(5A5A) packet that wraps the AA application frame.
 """
 
 from __future__ import annotations
@@ -57,10 +57,11 @@ def _handshake_response(plain: bytes) -> bytes:
 
 
 def _enc_response(sec: Security, aa_frame: bytes) -> bytes:
-    """Constrói um ENC_RESP (type=3) válido envolvendo `aa_frame` num V2.
+    """Build a valid ENC_RESP (type=3) carrying `aa_frame` inside a V2 packet.
 
-    Reaproveita o `Security` já autenticado: encode produz um REQ; viramos o
-    type para RESP e regeramos o sign sobre o novo header, como o device faz.
+    Reuses the already authenticated `Security`: encode produces a REQ, so the
+    type is flipped to RESP and the sign regenerated over the new header, the
+    way the device does it.
     """
     from midea_dishwasher_api.security import TYPE_ENCRYPTED_RESPONSE, aes_cbc_decrypt
 
@@ -99,7 +100,7 @@ def _full_session_inbound() -> tuple[bytes, Security]:
     sec = Security()
     sec.authenticate(_handshake_response(plain), KEY)
     inbound = _handshake_response(plain) + _enc_response(sec, _status_aa())
-    # devolve um Security "fresco" igual ao que o transport derivará internamente
+    # hands back a fresh Security matching the one the transport derives
     return inbound, sec
 
 
@@ -117,6 +118,12 @@ def test_call_before_connect_raises() -> None:
     t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
     with pytest.raises(V3Error, match="not connected"):
         t(b"\xaa\x0b\xe1")
+
+
+def test_send_after_close_raises() -> None:
+    transport = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
+    with pytest.raises(V3Error, match="not connected"):
+        transport._send_all(b"\x00")
 
 
 def test_connect_handshake_and_request_roundtrip(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -137,7 +144,7 @@ def test_connect_handshake_and_request_roundtrip(monkeypatch: pytest.MonkeyPatch
     t.connect()
 
     assert calls == [(("10.0.0.5", 6444), 3.0)]
-    # handshake request foi enviado e começa com o magic 8370
+    # the handshake request went out and starts with the 8370 magic
     assert fake.sent[:2] == b"\x83\x70"
 
     reply = t(b"\xaa\x0b\xe1" + b"\x00" * 8 + b"\x03\x00\x11")
@@ -159,17 +166,17 @@ def test_context_manager_connects_and_closes(monkeypatch: pytest.MonkeyPatch) ->
 
 def test_close_is_idempotent_and_safe_without_socket() -> None:
     t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
-    # nunca conectou: close não deve explodir
+    # never connected: close must still be safe
     t.close()
     t.close()
 
 
 def test_handshake_wrong_response_type_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     # frame ERROR (type=0xF) onde deveria vir um handshake response (type=1).
-    # Decodifica sem tcp_key (não é encrypted) e bate na checagem de type.
+    # decodes without a tcp_key (not encrypted) and trips the type check
     from midea_dishwasher_api.security import TYPE_ERROR
 
-    # _recv_packet lê HEADER_LEN + PACKET_ID_LEN + size; com size=3 são 5 bytes
+    # _recv_packet reads HEADER_LEN + PACKET_ID_LEN + size, so 5 bytes for size=3
     wrong = (
         b"\x83\x70"
         + (3).to_bytes(2, "big")
@@ -182,7 +189,7 @@ def test_handshake_wrong_response_type_raises(monkeypatch: pytest.MonkeyPatch) -
     _patch_socket(monkeypatch, fake)
 
     t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
-    with pytest.raises(V3Error, match="expected handshake response"):
+    with pytest.raises(V3Error, match="expected type=1"):
         t.connect()
 
 
@@ -198,22 +205,22 @@ def test_recv_packet_bad_magic_raises(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_recv_exact_eof_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    # só 3 bytes disponíveis; _recv_exact(HEADER_LEN=6) verá EOF
+    # only 3 bytes available, so _recv_exact(HEADER_LEN=6) hits EOF
     fake = FakeSocket(b"\x83\x70\x00")
     _patch_socket(monkeypatch, fake)
 
     t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
-    with pytest.raises(V3Error, match="connection closed after"):
+    with pytest.raises(V3Error, match="closed after"):
         t.connect()
 
 
 def test_call_skips_non_enc_resp_frames(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Frames com msg_type != ENC_RESP devem ser ignorados até chegar o RESP."""
+    """Frames other than ENC_RESP are skipped until the response arrives."""
     plain = os.urandom(32)
     sec = Security()
     sec.authenticate(_handshake_response(plain), KEY)
 
-    # primeiro um handshake response (type=1) ruído, depois o ENC_RESP real
+    # a stray handshake response (type=1) first, then the real ENC_RESP
     noise = _handshake_response(os.urandom(32))
     inbound = _handshake_response(plain) + noise + _enc_response(sec, _status_aa())
     fake = FakeSocket(inbound)
@@ -244,7 +251,7 @@ def test_recv_exact_reassembles_fragmented_chunks() -> None:
 
 
 def test_recv_packet_reads_full_frame_by_size() -> None:
-    """_recv_packet lê HEADER_LEN e depois PACKET_ID_LEN+size do corpo."""
+    """_recv_packet reads HEADER_LEN, then PACKET_ID_LEN + size of body."""
     payload = b"\xee" * (PACKET_ID_LEN + 10)
     head = b"\x83\x70" + (10).to_bytes(2, "big") + b"\x20\x03"
     fake = FakeSocket(head + payload)

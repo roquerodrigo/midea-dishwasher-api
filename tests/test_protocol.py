@@ -1,6 +1,8 @@
-"""Testes byte-exatos contra o que o plugin Lua T_0000_E1_5.lua produziria."""
+"""Byte-exact tests against what the T_0000_E1_5.lua plugin would produce."""
 
 from __future__ import annotations
+
+import pytest
 
 from midea_dishwasher_api import (
     BrightLevel,
@@ -179,7 +181,9 @@ def test_client_uses_transport() -> None:
 
     c.start_to_work(mode=Mode.ECO)
     body = captured[1][10:48]
-    assert body[0] == 0x08 and body[1] == 0x03 and body[2] == 0x04
+    assert body[0] == 0x08
+    assert body[1] == 0x03
+    assert body[2] == 0x04
 
     s = c.query_status()
     assert isinstance(s, DishwasherStatus)
@@ -187,11 +191,8 @@ def test_client_uses_transport() -> None:
 
 def test_set_bright_validation() -> None:
     c = Client(send=lambda _: assemble_frame(bytes(46), 0x02))
-    try:
+    with pytest.raises(ValueError, match="7 is not a valid BrightLevel"):
         c.set_bright(7)
-        raise AssertionError("expected ValueError")
-    except ValueError:
-        pass
 
 
 def test_ack_only_frame() -> None:

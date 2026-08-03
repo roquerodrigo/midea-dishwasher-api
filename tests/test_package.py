@@ -1,4 +1,4 @@
-"""Cobre o fallback de versão quando o pacote não está instalado."""
+"""Covers the version fallback used when the package is not installed."""
 
 from __future__ import annotations
 
@@ -27,6 +27,6 @@ def test_version_fallback_when_not_installed(monkeypatch: pytest.MonkeyPatch) ->
     try:
         assert reloaded.__version__ == "0.0.0+local"
     finally:
-        # restaura o módulo ao estado normal para os demais testes
+        # restore the module for the remaining tests
         monkeypatch.undo()
         importlib.reload(midea_dishwasher_api)

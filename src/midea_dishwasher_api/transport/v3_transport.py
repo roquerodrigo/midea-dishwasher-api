@@ -1,4 +1,4 @@
-"""Transporte LAN V3 da Midea: TCP socket + handshake + send/recv 8370."""
+"""Midea LAN V3 transport: TCP socket, handshake and 8370 send/receive."""
 
 from __future__ import annotations
 
@@ -9,7 +9,10 @@ from typing import TYPE_CHECKING, Self
 
 from ..security import (
     HEADER_LEN,
+    KEY_LEN,
+    MAGIC,
     PACKET_ID_LEN,
+    TOKEN_LEN,
     TYPE_ENCRYPTED_RESPONSE,
     TYPE_HANDSHAKE_RESPONSE,
     Security,
@@ -27,16 +30,19 @@ OnWireCallback = Callable[[str, bytes], None]
 
 
 def _noop_on_wire(_direction: str, _data: bytes) -> None:
-    return None
+    """Drop wire traces when the caller asked for none."""
+    return
 
 
 class V3Transport:
-    """Sessão LAN V3. Use como context manager OU `connect()` + `close()`.
+    """
+    A LAN V3 session, usable as a context manager or via connect()/close().
 
-    Pode ser passado direto como `send` para `Client(send=transport)`.
+    An instance is callable, so it can be passed straight to
+    ``Client(send=transport)``.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913, PLR0917 — host plus credentials are one logical bundle.
         self,
         host: str,
         device_id: int,
@@ -46,10 +52,13 @@ class V3Transport:
         timeout: float = 10.0,
         on_wire: OnWireCallback | None = None,
     ) -> None:
-        if len(token) != 64:
-            raise ValueError(f"token must be 64 bytes (got {len(token)})")
-        if len(key) != 32:
-            raise ValueError(f"key must be 32 bytes (got {len(key)})")
+        """Validate the credentials up front and prepare an unconnected session."""
+        if len(token) != TOKEN_LEN:
+            msg = f"Failed to build transport: token must be {TOKEN_LEN} bytes (got {len(token)})"
+            raise ValueError(msg)
+        if len(key) != KEY_LEN:
+            msg = f"Failed to build transport: key must be {KEY_LEN} bytes (got {len(key)})"
+            raise ValueError(msg)
         self.host: str = host
         self.port: int = port
         self.device_id: int = device_id
@@ -61,6 +70,7 @@ class V3Transport:
         self._on_wire: OnWireCallback = on_wire or _noop_on_wire
 
     def __enter__(self) -> Self:
+        """Open the session on entry."""
         self.connect()
         return self
 
@@ -70,14 +80,17 @@ class V3Transport:
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
+        """Close the session on exit."""
         self.close()
 
     def connect(self) -> None:
+        """Open the TCP connection and complete the V3 handshake."""
         log.debug("connecting to %s:%d", self.host, self.port)
         self._sock = socket.create_connection((self.host, self.port), timeout=self._timeout)
         self._handshake()
 
     def close(self) -> None:
+        """Close the TCP connection, if one is open."""
         if self._sock is not None:
             try:
                 self._sock.close()
@@ -85,8 +98,10 @@ class V3Transport:
                 self._sock = None
 
     def __call__(self, frame: bytes) -> bytes:
+        """Send an application frame and return the frame that answers it."""
         if self._sock is None:
-            raise V3Error("transport not connected — call connect() first")
+            msg = "Failed to send frame: transport not connected"
+            raise V3Error(msg)
         v2 = v2_pack(self.device_id, frame)
         request = self._security.encode(v2)
         self._on_wire("TX", request)
@@ -101,6 +116,7 @@ class V3Transport:
             log.debug("ignoring frame with msg_type=0x%x while waiting for ENC_RESP", msg_type)
 
     def _handshake(self) -> None:
+        """Exchange the handshake and derive the session key."""
         request = self._security.handshake_request(self._token)
         self._on_wire("TX", request)
         self._send_all(request)
@@ -109,29 +125,40 @@ class V3Transport:
         self._on_wire("RX", packet)
         msg_type, _body = self._security.decode(packet)
         if msg_type != TYPE_HANDSHAKE_RESPONSE:
-            raise V3Error(f"expected handshake response (type=1), got type=0x{msg_type:x}")
+            msg = f"Failed to handshake: expected type=1, got type=0x{msg_type:x}"
+            raise V3Error(msg)
         self._security.authenticate(packet, self._key)
         log.info("V3 session established with %s", self.host)
 
     def _send_all(self, data: bytes) -> None:
-        assert self._sock is not None
-        self._sock.sendall(data)
+        """Write every byte to the socket."""
+        self._connected_socket().sendall(data)
 
     def _recv_packet(self) -> bytes:
-        assert self._sock is not None
+        """Read one whole 8370 packet off the socket."""
         head = self._recv_exact(HEADER_LEN)
-        if head[:2] != b"\x83\x70":
-            raise V3Error(f"bad magic in response: {head[:2].hex()}")
+        if head[:2] != MAGIC:
+            msg = f"Failed to read response: bad magic {head[:2].hex()}"
+            raise V3Error(msg)
         size = (head[2] << 8) | head[3]
         body = self._recv_exact(PACKET_ID_LEN + size)
         return head + body
 
-    def _recv_exact(self, n: int) -> bytes:
-        assert self._sock is not None
-        buf = bytearray()
-        while len(buf) < n:
-            chunk = self._sock.recv(n - len(buf))
+    def _recv_exact(self, size: int) -> bytes:
+        """Read exactly ``size`` bytes, or fail if the device hangs up first."""
+        sock = self._connected_socket()
+        buffer = bytearray()
+        while len(buffer) < size:
+            chunk = sock.recv(size - len(buffer))
             if not chunk:
-                raise V3Error(f"connection closed after {len(buf)}/{n} bytes")
-            buf.extend(chunk)
-        return bytes(buf)
+                msg = f"Failed to read response: closed after {len(buffer)}/{size} bytes"
+                raise V3Error(msg)
+            buffer.extend(chunk)
+        return bytes(buffer)
+
+    def _connected_socket(self) -> socket.socket:
+        """Return the open socket, or fail when the session is not connected."""
+        if self._sock is None:
+            msg = "Failed to use transport: not connected"
+            raise V3Error(msg)
+        return self._sock

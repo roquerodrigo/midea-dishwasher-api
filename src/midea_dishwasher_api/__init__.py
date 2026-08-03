@@ -1,4 +1,4 @@
-"""Cliente Python para a lava-louças Midea (device type `0xE1`)."""
+"""Python client for Midea dishwashers (device type `0xE1`)."""
 
 from importlib.metadata import PackageNotFoundError, version
 

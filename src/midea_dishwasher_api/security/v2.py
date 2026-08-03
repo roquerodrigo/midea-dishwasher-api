@@ -1,4 +1,4 @@
-"""V2 (5A5A): empacotamento AES-ECB + MD5 do frame AA dentro do frame V3."""
+"""V2 (5A5A) layer: AES-ECB + MD5 wrapping of an AA frame inside a V3 frame."""
 
 from __future__ import annotations
 
@@ -17,9 +17,12 @@ from .crypto import (
 )
 from .v3_error import V3Error
 
+_V2_MAGIC = b"\x5a\x5a"
+_V2_LENGTH_OFFSET_END = 6
+
 
 def _v2_timestamp() -> bytes:
-    """Timestamp do V2: 8 bytes BCD-ish YYYYMMDDhhmmssXX (centiseconds)."""
+    """Return the V2 timestamp: 8 BCD-ish bytes, YYYYMMDDhhmmssXX."""
     now = datetime.now(UTC)
     return bytes(
         [
@@ -36,11 +39,11 @@ def _v2_timestamp() -> bytes:
 
 
 def v2_pack(device_id: int, frame: bytes) -> bytes:
-    """Empacote um frame AA em um pacote V2 (5A5A)."""
+    """Wrap an AA frame in a V2 (5A5A) packet."""
     encrypted_payload = aes_ecb_encrypt(pkcs7_pad(frame), V2_ENC_KEY)
     length = V2_HEADER_LEN + len(encrypted_payload) + V2_SIGN_LEN
     header = (
-        b"\x5a\x5a"
+        _V2_MAGIC
         + b"\x01\x11"
         + length.to_bytes(2, "little")
         + b"\x20\x00"
@@ -50,22 +53,26 @@ def v2_pack(device_id: int, frame: bytes) -> bytes:
         + bytes(12)
     )
     packet = header + encrypted_payload
-    return packet + md5(packet + V2_SIGN_KEY).digest()
+    return packet + md5(packet + V2_SIGN_KEY).digest()  # noqa: S324
 
 
 def v2_unpack(packet: bytes) -> bytes:
-    """Extrai o frame AA de um pacote V2 (5A5A)."""
-    if len(packet) < 6:
-        raise V3Error(f"v2 packet too short: {len(packet)}")
-    if packet[:2] != b"\x5a\x5a":
-        raise V3Error(f"not a v2 packet: starts with {packet[:2].hex()}")
-    length = int.from_bytes(packet[4:6], "little")
+    """Extract the AA frame carried by a V2 (5A5A) packet."""
+    if len(packet) < _V2_LENGTH_OFFSET_END:
+        msg = f"Failed to unpack v2 packet: too short, {len(packet)} bytes"
+        raise V3Error(msg)
+    if packet[:2] != _V2_MAGIC:
+        msg = f"Failed to unpack v2 packet: starts with {packet[:2].hex()}"
+        raise V3Error(msg)
+    length = int.from_bytes(packet[4:_V2_LENGTH_OFFSET_END], "little")
     if len(packet) < length:
-        raise V3Error(f"v2 packet truncated: {len(packet)} < {length}")
+        msg = f"Failed to unpack v2 packet: truncated, {len(packet)} < {length}"
+        raise V3Error(msg)
     packet = packet[:length]
     encrypted_frame = packet[V2_HEADER_LEN:-V2_SIGN_LEN]
-    rx_sign = packet[-V2_SIGN_LEN:]
-    if md5(packet[:-V2_SIGN_LEN] + V2_SIGN_KEY).digest() != rx_sign:
-        raise V3Error("v2 MD5 sign mismatch")
+    received_sign = packet[-V2_SIGN_LEN:]
+    if md5(packet[:-V2_SIGN_LEN] + V2_SIGN_KEY).digest() != received_sign:  # noqa: S324
+        msg = "Failed to unpack v2 packet: MD5 sign mismatch"
+        raise V3Error(msg)
     decrypted = aes_ecb_decrypt(encrypted_frame, V2_ENC_KEY)
     return pkcs7_unpad(decrypted)

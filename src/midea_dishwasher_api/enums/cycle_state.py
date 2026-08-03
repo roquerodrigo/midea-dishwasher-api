@@ -1,4 +1,4 @@
-"""Estado atual do ciclo (byte 1 da resposta de status)."""
+"""State of the cycle (byte 1 of the status response)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,8 @@ from enum import StrEnum
 
 
 class CycleState(StrEnum):
+    """What the machine is doing right now."""
+
     POWER_OFF = "power_off"
     IDLE = "idle"
     ORDER = "order"
@@ -15,6 +17,7 @@ class CycleState(StrEnum):
 
     @classmethod
     def from_byte(cls, byte: int) -> CycleState | None:
+        """Return the cycle state for a status byte, or None if unknown."""
         return _BYTE_TO_CYCLE_STATE.get(byte)
 
 

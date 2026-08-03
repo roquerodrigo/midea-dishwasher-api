@@ -76,20 +76,25 @@ exclude = ["scripts"]
 exclude = ["*.md"]  # ruff 0.16 formats Python blocks in Markdown; docs keep their own layout
 
 [tool.ruff.lint]
-select = [
-    "E",
-    "F",
-    "I",
-    "B",
-    "UP",
-    "SIM",
-    "RUF",
-    "TC",
-]
-ignore = []
+select = ["ALL"]
+ignore = ["ANN401", "D203", "D212", "COM812", "ISC001", "CPY001"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D"]
+# The protocol and state packages read the shared enums from the parent package;
+# a relative parent import is the only form that resolves under mypy and at runtime.
+"src/midea_dishwasher_api/protocol/*.py" = ["TID252"]
+"src/midea_dishwasher_api/state/*.py" = ["TID252"]
+"src/midea_dishwasher_api/transport/*.py" = ["TID252"]
+"tests/*" = [
+    "S101",     # assert is normal in pytest
+    "S105",     # hardcoded-password-string is fine for fake test credentials
+    "S106",     # hardcoded-password-func-arg is fine for fake test credentials
+    "D",        # no docstrings required in tests
+    "ANN",      # no type annotations required in tests
+    "PLC0415",  # local imports inside tests are intentional
+    "SLF001",   # testing private internals is intentional
+    "PLR2004",  # magic numbers in test assertions are fine
+]
 
 [tool.mypy]
 python_version = "3.14"

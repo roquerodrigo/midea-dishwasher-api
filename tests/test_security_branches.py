@@ -1,7 +1,7 @@
-"""Cobertura dos ramos de erro/validação da camada de segurança V3/V2.
+"""Error and validation branches of the V3/V2 security layer.
 
-Mesma abordagem byte-a-byte dos demais testes: frames montados à mão para
-exercitar cada guarda de validação sem rede nem hardware.
+Same byte-exact approach as the other tests: frames assembled by hand to
+exercise every guard without a network or a device.
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ def test_encode_before_authenticate_raises() -> None:
 
 
 def test_decode_rejects_too_short_frame() -> None:
-    with pytest.raises(V3Error, match="frame too short"):
+    with pytest.raises(V3Error, match="too short"):
         Security().decode(b"\x83\x70\x00")
 
 
@@ -84,7 +84,7 @@ def test_decode_rejects_bad_magic() -> None:
 
 
 def test_decode_rejects_unexpected_byte4() -> None:
-    with pytest.raises(V3Error, match="unexpected byte 4"):
+    with pytest.raises(V3Error, match="byte 4 is"):
         Security().decode(b"\x83\x70\x00\x40\x21\x03")
 
 
@@ -118,13 +118,13 @@ def test_decode_encrypted_without_tcp_key_raises() -> None:
         + bytes([TYPE_ENCRYPTED_RESPONSE])
         + b"\x00" * 48
     )
-    with pytest.raises(V3Error, match="without tcp_key"):
+    with pytest.raises(V3Error, match="no session key negotiated"):
         Security().decode(raw)
 
 
 def test_decode_encrypted_rejects_unaligned_ciphertext() -> None:
     sec = _authed()
-    # corpo (ciphertext) com 1 byte → não múltiplo de 16
+    # a one-byte ciphertext is not a whole number of AES blocks
     raw = (
         b"\x83\x70"
         + (1 + SIGN_LEN).to_bytes(2, "big")
@@ -133,7 +133,7 @@ def test_decode_encrypted_rejects_unaligned_ciphertext() -> None:
         + b"\xaa"
         + b"\x00" * SIGN_LEN
     )
-    with pytest.raises(V3Error, match="not 16-aligned"):
+    with pytest.raises(V3Error, match="ciphertext not aligned"):
         sec.decode(raw)
 
 
@@ -142,7 +142,7 @@ def test_decode_encrypted_rejects_bad_sign() -> None:
     pkt = bytearray(sec.encode(b"x" * 12))
     pad = (pkt[5] >> 4) & 0xF
     pkt[5] = (pad << 4) | TYPE_ENCRYPTED_RESPONSE
-    # não regeramos o sign → SHA256 mismatch
+    # the sign was not regenerated, so it no longer matches
     with pytest.raises(V3Error, match="SHA256 mismatch"):
         sec.decode(bytes(pkt))
 
@@ -184,7 +184,7 @@ def test_pkcs7_unpad_empty_returns_empty() -> None:
 
 
 def test_pkcs7_unpad_invalid_padding_returns_input() -> None:
-    # último byte 0xFF não é padding PKCS7 válido → retorna como veio
+    # a trailing 0xFF is not valid PKCS#7 padding, so the data is returned as is
     data = b"hello\xff"
     assert pkcs7_unpad(data) == data
 
