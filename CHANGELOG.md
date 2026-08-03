@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.5](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.4...v1.3.5) (2026-08-03)
+
+
+### Documentation
+
+* track the agent guide and record the lint gotchas ([441441e](https://github.com/roquerodrigo/midea-dishwasher-api/commit/441441e114c3bfd0068f4c0b9de377e9a182f682))
+
 ## [1.3.4](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.3...v1.3.4) (2026-07-13)
 
 
