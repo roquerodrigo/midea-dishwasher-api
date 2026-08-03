@@ -80,6 +80,9 @@ select = ["ALL"]
 ignore = ["ANN401", "D203", "D212", "COM812", "ISC001", "CPY001"]
 
 [tool.ruff.lint.per-file-ignores]
+# The V2 layer mandates AES-ECB and MD5; both are the protocol's choice, not ours.
+"src/midea_dishwasher_api/security/crypto.py" = ["S305", "S324"]
+"src/midea_dishwasher_api/security/v2.py" = ["S324"]
 # The protocol and state packages read the shared enums from the parent package;
 # a relative parent import is the only form that resolves under mypy and at runtime.
 "src/midea_dishwasher_api/protocol/*.py" = ["TID252"]

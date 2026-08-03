@@ -53,7 +53,7 @@ def v2_pack(device_id: int, frame: bytes) -> bytes:
         + bytes(12)
     )
     packet = header + encrypted_payload
-    return packet + md5(packet + V2_SIGN_KEY).digest()  # noqa: S324
+    return packet + md5(packet + V2_SIGN_KEY).digest()
 
 
 def v2_unpack(packet: bytes) -> bytes:
@@ -71,7 +71,7 @@ def v2_unpack(packet: bytes) -> bytes:
     packet = packet[:length]
     encrypted_frame = packet[V2_HEADER_LEN:-V2_SIGN_LEN]
     received_sign = packet[-V2_SIGN_LEN:]
-    if md5(packet[:-V2_SIGN_LEN] + V2_SIGN_KEY).digest() != received_sign:  # noqa: S324
+    if md5(packet[:-V2_SIGN_LEN] + V2_SIGN_KEY).digest() != received_sign:
         msg = "Failed to unpack v2 packet: MD5 sign mismatch"
         raise V3Error(msg)
     decrypted = aes_ecb_decrypt(encrypted_frame, V2_ENC_KEY)
