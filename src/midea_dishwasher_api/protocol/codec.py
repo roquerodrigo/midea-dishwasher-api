@@ -1,4 +1,4 @@
-"""Encoder/decoder do frame de aplicação `AA … E1` da lava-louças Midea."""
+"""Encoder and decoder of the `AA ... E1` application frame."""
 
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ from .frame_error import FrameError
 
 
 class ControlPayload(TypedDict, total=False):
+    """Fields a control frame can carry; every one of them is optional."""
+
     machine_state: str
     mode: str
     additional: int
@@ -18,6 +20,7 @@ class ControlPayload(TypedDict, total=False):
 SYNC = 0xAA
 DEVICE_TYPE = 0xE1
 HEADER_LEN = 10
+_OFFSET_MSG_TYPE = 9
 CONTROL_BODY_LEN = 38
 QUERY_BODY = b"\x00"
 
@@ -43,48 +46,59 @@ _STATE_BYTE_WORK = _CONTROL_STATE_BYTE["work"]
 _MODE_BYTE_ECO = 0x04
 
 
-def make_sum(buf: bytes | bytearray, start: int, end_inclusive: int) -> int:
-    s = sum(buf[start : end_inclusive + 1]) & 0xFF
-    return (-s) & 0xFF
+def make_sum(buffer: bytes | bytearray, start: int, end_inclusive: int) -> int:
+    """Return the frame checksum: two's complement of the byte range sum."""
+    total = sum(buffer[start : end_inclusive + 1]) & 0xFF
+    return (-total) & 0xFF
 
 
 def assemble_frame(body: bytes | bytearray, msg_type: int) -> bytes:
+    """Wrap a body in the application header and append the checksum."""
     total = HEADER_LEN + len(body) + 1
     frame = bytearray(total)
     frame[0] = SYNC
     frame[1] = total - 1
     frame[2] = DEVICE_TYPE
-    frame[9] = msg_type
+    frame[_OFFSET_MSG_TYPE] = msg_type
     frame[HEADER_LEN : HEADER_LEN + len(body)] = body
     frame[-1] = make_sum(frame, 1, total - 2)
     return bytes(frame)
 
 
 def parse_frame(frame: bytes) -> tuple[int, bytes]:
+    """Validate a frame and return its message type and body."""
     if len(frame) < HEADER_LEN + 1:
-        raise FrameError(f"frame too short: {len(frame)} bytes")
+        msg = f"Failed to parse frame: too short, {len(frame)} bytes"
+        raise FrameError(msg)
     if frame[0] != SYNC:
-        raise FrameError(f"bad sync byte: 0x{frame[0]:02x}")
+        msg = f"Failed to parse frame: bad sync byte 0x{frame[0]:02x}"
+        raise FrameError(msg)
     if frame[2] != DEVICE_TYPE:
-        raise FrameError(f"not a dishwasher frame (device_type=0x{frame[2]:02x})")
+        msg = f"Failed to parse frame: device_type 0x{frame[2]:02x} is not a dishwasher"
+        raise FrameError(msg)
     declared = frame[1] + 1
     if declared != len(frame):
-        raise FrameError(f"declared length {declared} != actual {len(frame)}")
+        msg = f"Failed to parse frame: declared length {declared} != actual {len(frame)}"
+        raise FrameError(msg)
     expected = make_sum(frame, 1, len(frame) - 2)
     if expected != frame[-1]:
-        raise FrameError(f"checksum mismatch: got 0x{frame[-1]:02x}, expected 0x{expected:02x}")
-    return frame[9], bytes(frame[HEADER_LEN:-1])
+        msg = f"Failed to parse frame: checksum 0x{frame[-1]:02x}, expected 0x{expected:02x}"
+        raise FrameError(msg)
+    return frame[_OFFSET_MSG_TYPE], bytes(frame[HEADER_LEN:-1])
 
 
 def build_query() -> bytes:
+    """Build the status-query frame."""
     return assemble_frame(QUERY_BODY, MsgType.QUERY)
 
 
 def build_control(payload: ControlPayload) -> bytes:
+    """Build a control frame for the requested payload."""
     return assemble_frame(_encode_control_body(payload), MsgType.CONTROL)
 
 
 def _encode_control_body(payload: ControlPayload) -> bytes:
+    """Route the payload to the rinse-aid or the main control opcode."""
     if "bright" in payload:
         return _encode_bright(int(payload["bright"]))
     return _encode_main(
@@ -95,6 +109,7 @@ def _encode_control_body(payload: ControlPayload) -> bytes:
 
 
 def _encode_bright(level: int) -> bytes:
+    """Encode the body of a rinse-aid level command."""
     body = bytearray(CONTROL_BODY_LEN)
     body[_BRIGHT_OPCODE] = _OPCODE_BRIGHT
     body[_BRIGHT_LEVEL] = level & 0xFF
@@ -102,6 +117,7 @@ def _encode_bright(level: int) -> bytes:
 
 
 def _encode_main(machine_state: str | None, mode: str | None, additional: int) -> bytes:
+    """Encode the body of the main power/program command."""
     state_byte = _CONTROL_STATE_BYTE.get(machine_state, 0x00) if machine_state else 0x00
     mode_byte = _resolve_mode_byte(mode, state_byte)
 
@@ -114,7 +130,7 @@ def _encode_main(machine_state: str | None, mode: str | None, additional: int) -
 
 
 def _resolve_mode_byte(mode: str | None, state_byte: int) -> int:
-    """Mode encoding falls back to ECO when starting a cycle without a mode."""
+    """Return the program byte, falling back to ECO when a cycle starts blind."""
     if mode is None or mode == "null":
         return _MODE_BYTE_ECO if state_byte == _STATE_BYTE_WORK else 0x00
     byte = Mode.byte_for(mode)

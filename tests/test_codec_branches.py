@@ -1,4 +1,4 @@
-"""Ramos de validação do codec AA e do decoder/cliente de alto nível."""
+"""Validation branches of the AA codec, the decoder and the client."""
 
 from __future__ import annotations
 
@@ -25,9 +25,9 @@ def test_parse_frame_rejects_bad_sync() -> None:
 def test_parse_frame_rejects_wrong_device_type() -> None:
     frame = bytearray(assemble_frame(bytes(12), 0x02))
     frame[2] = 0xAC
-    # consertar o checksum para chegar até a checagem de device_type
+    # fix the checksum so the device_type check is the one that trips
     frame[-1] = make_sum(frame, 1, len(frame) - 2)
-    with pytest.raises(FrameError, match="not a dishwasher frame"):
+    with pytest.raises(FrameError, match="is not a dishwasher"):
         parse_frame(bytes(frame))
 
 
@@ -42,7 +42,7 @@ def test_parse_frame_rejects_declared_length_mismatch() -> None:
 def test_parse_frame_rejects_checksum_mismatch() -> None:
     frame = bytearray(assemble_frame(bytes(12), 0x02))
     frame[-1] ^= 0xFF
-    with pytest.raises(FrameError, match="checksum mismatch"):
+    with pytest.raises(FrameError, match="checksum 0x"):
         parse_frame(bytes(frame))
 
 
@@ -57,7 +57,7 @@ def test_build_control_unknown_mode_starting_work_falls_back_to_eco() -> None:
 
 
 def test_decode_response_ignores_non_decodable_msg_type() -> None:
-    # msg_type 0x05 não está em _DECODABLE_MSG_TYPES → retorna status cru
+    # msg_type 0x05 is not decodable, so the status comes back empty
     frame = assemble_frame(bytes(46), 0x05)
     status = decode_response(frame)
     assert status.msg_type == 0x05

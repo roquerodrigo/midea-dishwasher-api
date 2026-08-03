@@ -153,5 +153,5 @@ def test_v2_unpack_rejects_bad_md5() -> None:
 
 
 def test_v2_unpack_rejects_wrong_magic() -> None:
-    with pytest.raises(V3Error, match="not a v2"):
+    with pytest.raises(V3Error, match="starts with"):
         v2_unpack(b"\x5b\x5a\x01\x11\x40\x00")

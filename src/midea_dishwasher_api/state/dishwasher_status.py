@@ -1,3 +1,5 @@
+"""Status snapshot decoded from a device response."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,6 +16,8 @@ from ..enums import (
 
 @dataclass(slots=True)
 class DishwasherStatus:
+    """Everything the machine reports in a single status response."""
+
     raw: bytes
     msg_type: int
     ack_only: bool = False

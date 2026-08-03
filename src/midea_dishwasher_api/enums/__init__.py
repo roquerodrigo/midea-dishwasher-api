@@ -1,3 +1,7 @@
+"""Enums shared by the codec, the decoder and the public client."""
+
+from __future__ import annotations
+
 from .bright_level import BrightLevel
 from .cycle_state import CycleState
 from .error_code import ErrorCode

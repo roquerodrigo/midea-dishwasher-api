@@ -33,7 +33,7 @@ committing — all three must exit cleanly. `uv run pytest` follows.
 
 ## Naming
 
-- Public classes are `CapWords`: `DishwasherClient`, `V3Transport`, `FrameCodec`.
+- Public classes are `CapWords`: `Client`, `V3Transport`, `Security`.
 - Exception classes end with `Error`: `FrameError`, `V3Error`.
 - Enums end with their domain noun: `MachineState`, `WashStage`, `ErrorCode`,
   `MsgType`.
@@ -204,7 +204,10 @@ generate `CHANGELOG.md`:
 
 ## Linting and verification
 
-- Ruff configuration in `pyproject.toml` under `[tool.ruff]`.
+- Ruff configuration in `pyproject.toml` under `[tool.ruff]`: every rule is
+  selected (`select = ["ALL"]`), with the handful of documented exceptions in
+  `ignore` and `per-file-ignores`. Protocol-mandated MD5/ECB usage carries an
+  inline `# noqa` naming the reason.
 - Mypy configuration in `pyproject.toml` under `[tool.mypy]` (strict).
 - After every change run the three-step lint pipeline + `pytest`. Both
   gates mirror CI.

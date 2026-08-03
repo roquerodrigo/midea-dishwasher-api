@@ -1,3 +1,7 @@
+"""Application-level frame codec (`AA ... E1`)."""
+
+from __future__ import annotations
+
 from .codec import (
     CONTROL_BODY_LEN,
     DEVICE_TYPE,
