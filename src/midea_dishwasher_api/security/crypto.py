@@ -20,7 +20,7 @@ V2_HEADER_LEN = 40
 V2_SIGN_LEN = 16
 V2_SIGN_KEY = b"xhdiwjnchekd4d512chdjx5d8e4c394D2D7S"
 # MD5 and ECB below are what the V2 layer specifies; they are not our choice.
-V2_ENC_KEY = md5(V2_SIGN_KEY).digest()  # noqa: S324
+V2_ENC_KEY = md5(V2_SIGN_KEY).digest()
 
 AES_BLOCK_LEN = 16
 
@@ -39,13 +39,13 @@ def aes_cbc_decrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
 
 def aes_ecb_encrypt(data: bytes, key: bytes) -> bytes:
     """Encrypt data with AES-ECB, as the V2 layer requires."""
-    enc = Cipher(algorithms.AES(key), modes.ECB()).encryptor()  # noqa: S305
+    enc = Cipher(algorithms.AES(key), modes.ECB()).encryptor()
     return enc.update(data) + enc.finalize()
 
 
 def aes_ecb_decrypt(data: bytes, key: bytes) -> bytes:
     """Decrypt data with AES-ECB, as the V2 layer requires."""
-    dec = Cipher(algorithms.AES(key), modes.ECB()).decryptor()  # noqa: S305
+    dec = Cipher(algorithms.AES(key), modes.ECB()).decryptor()
     return dec.update(data) + dec.finalize()
 
 

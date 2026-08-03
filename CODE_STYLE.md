@@ -206,8 +206,9 @@ generate `CHANGELOG.md`:
 
 - Ruff configuration in `pyproject.toml` under `[tool.ruff]`: every rule is
   selected (`select = ["ALL"]`), with the handful of documented exceptions in
-  `ignore` and `per-file-ignores`. Protocol-mandated MD5/ECB usage carries an
-  inline `# noqa` naming the reason.
+  `ignore` and `per-file-ignores`. The MD5/ECB primitives the V2 layer mandates
+  are exempted per file rather than inline — an inline `# noqa` rewrites the
+  source line, and CodeQL then reports the long-standing finding as a new one.
 - Mypy configuration in `pyproject.toml` under `[tool.mypy]` (strict).
 - After every change run the three-step lint pipeline + `pytest`. Both
   gates mirror CI.
