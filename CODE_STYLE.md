@@ -129,6 +129,10 @@ The SDK ships a `py.typed` marker so downstream consumers get type info.
 - Pre-validate inputs (token must be 128 hex chars, key 64) before opening a
   socket so user-facing errors point at the bad input, not a downstream
   traceback.
+- **Never guard a runtime invariant with `assert`.** `python -O` strips
+  assertions, so the guard disappears and the failure resurfaces deeper as an
+  `AttributeError`. Raise from the exception hierarchy instead —
+  `V3Transport._connected_socket()` is the canonical example.
 
 ## Public API surface
 
