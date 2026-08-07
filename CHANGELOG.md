@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.6...v2.0.0) (2026-08-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* Python 3.11, 3.12 and 3.13 are no longer supported. Consumers on those interpreters must stay on 1.3.6.
+
+### Build System
+
+* require Python 3.14 ([3632046](https://github.com/roquerodrigo/midea-dishwasher-api/commit/3632046da81b27419b6de67fe65848428ba1b784))
+
 ## [1.3.6](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.5...v1.3.6) (2026-08-07)
 
 
