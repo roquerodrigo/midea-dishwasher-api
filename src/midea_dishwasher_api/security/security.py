@@ -46,7 +46,7 @@ from os import urandom
 
 from .crypto import (
     AES_BLOCK_LEN,
-    HEADER_LEN,
+    PACKET_HEADER_LEN,
     PACKET_ID_LEN,
     SIGN_LEN,
     TYPE_ENCRYPTED_REQUEST,
@@ -90,13 +90,13 @@ class Security:
         if response == b"ERROR":
             msg = "Failed to authenticate: device returned ERROR during handshake"
             raise V3Error(msg)
-        if len(response) < HEADER_LEN + PACKET_ID_LEN + TOKEN_LEN:
+        if len(response) < PACKET_HEADER_LEN + PACKET_ID_LEN + TOKEN_LEN:
             msg = f"Failed to authenticate: response too short, {len(response)} bytes"
             raise V3Error(msg)
         if response[:2] != MAGIC:
             msg = f"Failed to authenticate: bad magic {response[:2].hex()}"
             raise V3Error(msg)
-        body = response[HEADER_LEN + PACKET_ID_LEN :]
+        body = response[PACKET_HEADER_LEN + PACKET_ID_LEN :]
         # Defensive: the length guard above already guarantees a full body.
         if len(body) < TOKEN_LEN:  # pragma: no cover
             msg = f"Failed to authenticate: body too short, {len(body)} bytes"
@@ -130,7 +130,7 @@ class Security:
 
     def decode(self, packet: bytes) -> tuple[int, bytes]:
         """Decode a received V3 frame into its message type and body."""
-        if len(packet) < HEADER_LEN:
+        if len(packet) < PACKET_HEADER_LEN:
             msg = f"Failed to decode frame: too short, {len(packet)} bytes"
             raise V3Error(msg)
         if packet[:2] != MAGIC:
@@ -144,10 +144,10 @@ class Security:
         pad = (packet[5] >> 4) & 0x0F
 
         if msg_type == TYPE_ERROR:
-            return msg_type, packet[HEADER_LEN:]
+            return msg_type, packet[PACKET_HEADER_LEN:]
 
         if msg_type in (TYPE_HANDSHAKE_REQUEST, TYPE_HANDSHAKE_RESPONSE):
-            return msg_type, packet[HEADER_LEN + PACKET_ID_LEN :]
+            return msg_type, packet[PACKET_HEADER_LEN + PACKET_ID_LEN :]
 
         if msg_type in (TYPE_ENCRYPTED_REQUEST, TYPE_ENCRYPTED_RESPONSE):
             return msg_type, self._decrypt_payload(packet, pad)
@@ -161,12 +161,12 @@ class Security:
             msg = "Failed to decode frame: no session key negotiated"
             raise V3Error(msg)
         sign = packet[-SIGN_LEN:]
-        ciphertext = packet[HEADER_LEN:-SIGN_LEN]
+        ciphertext = packet[PACKET_HEADER_LEN:-SIGN_LEN]
         if len(ciphertext) % AES_BLOCK_LEN:
             msg = f"Failed to decode frame: ciphertext not aligned, {len(ciphertext)} bytes"
             raise V3Error(msg)
         plaintext = aes_cbc_decrypt(ciphertext, self.tcp_key, ZERO_IV)
-        expected_sign = sha256(packet[:HEADER_LEN] + plaintext).digest()
+        expected_sign = sha256(packet[:PACKET_HEADER_LEN] + plaintext).digest()
         if expected_sign != sign:
             msg = "Failed to decode frame: SHA256 mismatch on response"
             raise V3Error(msg)
@@ -182,10 +182,10 @@ class Security:
     @staticmethod
     def packet_total_length(buffer: bytes) -> int | None:
         """Return the frame's expected total length once the header is in."""
-        if len(buffer) < HEADER_LEN:
+        if len(buffer) < PACKET_HEADER_LEN:
             return None
         if buffer[:2] != MAGIC:
             msg = f"Failed to read frame length: bad magic {buffer[:2].hex()}"
             raise V3Error(msg)
         size = (buffer[2] << 8) | buffer[3]
-        return HEADER_LEN + PACKET_ID_LEN + size
+        return PACKET_HEADER_LEN + PACKET_ID_LEN + size

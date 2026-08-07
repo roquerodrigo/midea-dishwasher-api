@@ -12,7 +12,7 @@ from hashlib import sha256
 import pytest
 
 from midea_dishwasher_api.security import (
-    HEADER_LEN,
+    PACKET_HEADER_LEN,
     PACKET_ID_LEN,
     SIGN_LEN,
     TYPE_ENCRYPTED_RESPONSE,
@@ -164,7 +164,7 @@ def test_packet_total_length_bad_magic() -> None:
 
 def test_packet_total_length_computes_expected_size() -> None:
     raw = b"\x83\x70" + (64).to_bytes(2, "big") + b"\x20\x01"
-    assert Security.packet_total_length(raw) == HEADER_LEN + PACKET_ID_LEN + 64
+    assert Security.packet_total_length(raw) == PACKET_HEADER_LEN + PACKET_ID_LEN + 64
 
 
 def test_v2_unpack_rejects_too_short() -> None:

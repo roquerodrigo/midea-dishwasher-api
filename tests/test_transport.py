@@ -15,7 +15,7 @@ import pytest
 
 from midea_dishwasher_api.protocol import assemble_frame
 from midea_dishwasher_api.security import (
-    HEADER_LEN,
+    PACKET_HEADER_LEN,
     PACKET_ID_LEN,
     SIGN_LEN,
     Security,
@@ -70,8 +70,8 @@ def _enc_response(sec: Security, aa_frame: bytes) -> bytes:
     pad = (pkt[5] >> 4) & 0xF
     pkt[5] = (pad << 4) | TYPE_ENCRYPTED_RESPONSE
     assert sec.tcp_key is not None
-    plaintext = aes_cbc_decrypt(bytes(pkt[HEADER_LEN:-SIGN_LEN]), sec.tcp_key, b"\x00" * 16)
-    pkt[-SIGN_LEN:] = sha256(bytes(pkt[:HEADER_LEN]) + plaintext).digest()
+    plaintext = aes_cbc_decrypt(bytes(pkt[PACKET_HEADER_LEN:-SIGN_LEN]), sec.tcp_key, b"\x00" * 16)
+    pkt[-SIGN_LEN:] = sha256(bytes(pkt[:PACKET_HEADER_LEN]) + plaintext).digest()
     return bytes(pkt)
 
 
@@ -176,7 +176,7 @@ def test_handshake_wrong_response_type_raises(monkeypatch: pytest.MonkeyPatch) -
     # decodes without a tcp_key (not encrypted) and trips the type check
     from midea_dishwasher_api.security import TYPE_ERROR
 
-    # _recv_packet reads HEADER_LEN + PACKET_ID_LEN + size, so 5 bytes for size=3
+    # _recv_packet reads PACKET_HEADER_LEN + PACKET_ID_LEN + size, so 5 bytes for size=3
     wrong = (
         b"\x83\x70"
         + (3).to_bytes(2, "big")
@@ -194,7 +194,7 @@ def test_handshake_wrong_response_type_raises(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_recv_packet_bad_magic_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    # header com magic errado: 6 bytes suficientes para _recv_exact(HEADER_LEN)
+    # header com magic errado: 6 bytes suficientes para _recv_exact(PACKET_HEADER_LEN)
     bad = b"\x99\x99" + (64).to_bytes(2, "big") + b"\x20\x01"
     fake = FakeSocket(bad)
     _patch_socket(monkeypatch, fake)
@@ -205,7 +205,7 @@ def test_recv_packet_bad_magic_raises(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_recv_exact_eof_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    # only 3 bytes available, so _recv_exact(HEADER_LEN=6) hits EOF
+    # only 3 bytes available, so _recv_exact(PACKET_HEADER_LEN=6) hits EOF
     fake = FakeSocket(b"\x83\x70\x00")
     _patch_socket(monkeypatch, fake)
 
@@ -251,7 +251,7 @@ def test_recv_exact_reassembles_fragmented_chunks() -> None:
 
 
 def test_recv_packet_reads_full_frame_by_size() -> None:
-    """_recv_packet reads HEADER_LEN, then PACKET_ID_LEN + size of body."""
+    """_recv_packet reads PACKET_HEADER_LEN, then PACKET_ID_LEN + size of body."""
     payload = b"\xee" * (PACKET_ID_LEN + 10)
     head = b"\x83\x70" + (10).to_bytes(2, "big") + b"\x20\x03"
     fake = FakeSocket(head + payload)

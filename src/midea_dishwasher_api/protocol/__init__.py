@@ -5,7 +5,7 @@ from __future__ import annotations
 from .codec import (
     CONTROL_BODY_LEN,
     DEVICE_TYPE,
-    HEADER_LEN,
+    FRAME_HEADER_LEN,
     QUERY_BODY,
     SYNC,
     ControlPayload,
@@ -20,7 +20,7 @@ from .frame_error import FrameError
 __all__ = [
     "CONTROL_BODY_LEN",
     "DEVICE_TYPE",
-    "HEADER_LEN",
+    "FRAME_HEADER_LEN",
     "QUERY_BODY",
     "SYNC",
     "ControlPayload",
