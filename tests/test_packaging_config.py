@@ -9,7 +9,7 @@ PYPROJECT = tomllib.loads(
     (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8"),
 )
 
-SUPPORTED_VERSIONS = ((3, 11), (3, 12), (3, 13), (3, 14))
+SUPPORTED_VERSIONS = ((3, 14),)
 
 
 def minimum_supported_version() -> tuple[int, int]:

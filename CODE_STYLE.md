@@ -180,12 +180,10 @@ generate `CHANGELOG.md`:
 
 - Build backend: `hatchling`. Wheel and sdist contain
   `src/midea_dishwasher_api`.
-- `requires-python = ">=3.11"` — the lowest interpreter the source actually
-  runs on (`enum.StrEnum`, `datetime.UTC` and `typing.Self` are the 3.11-only
-  APIs in use). The floor is a property of the code, not of the machine that
-  happens to build it: raising it locks out standalone consumers, so it moves
-  up only when a language or standard-library feature makes it unavoidable, and
-  then with a `BREAKING CHANGE:` footer.
+- `requires-python = ">=3.14"` — the floor Home Assistant declares, and this
+  package exists to be consumed by an integration running on it. Raising the
+  floor locks out standalone consumers, so it moves only when the supported
+  runtime moves, and then with a `BREAKING CHANGE:` footer.
 - **Four settings state a Python version and must agree**: `requires-python`,
   the `Programming Language :: Python :: 3.x` classifiers (one per supported
   version, the lowest matching the floor), `[tool.ruff] target-version` and
@@ -217,9 +215,10 @@ generate `CHANGELOG.md`:
 - The suite never touches hardware: every frame is assembled byte by byte
   from captured traffic. Real-device interaction lives in `scripts/`, which
   is excluded from linting, typing and CI.
-- CI runs the suite twice: on the newest interpreter and on the floor declared
-  by `requires-python`. Locally, `uv run --python 3.11 pytest` reproduces the
-  second run.
+- CI runs the suite on a single interpreter: the floor declared by
+  `requires-python` is also the newest release, so there is no older
+  interpreter left to exercise. Should the floor ever fall behind again, add
+  back a second job pinned to it.
 
 ## Linting and verification
 
