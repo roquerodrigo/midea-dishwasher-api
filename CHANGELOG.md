@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.3.6](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.5...v1.3.6) (2026-08-07)
+
+
+### Bug Fixes
+
+* **scripts:** repair the state dump import and share the .env loader ([c5c1921](https://github.com/roquerodrigo/midea-dishwasher-api/commit/c5c1921e8d768e1baadeecef624f711406573074))
+* **transport:** wrap socket errors in V3Error ([3b65413](https://github.com/roquerodrigo/midea-dishwasher-api/commit/3b65413028fcfee50db59898ebbfdf81778a95fa))
+
+
+### Code Refactoring
+
+* give the two header length constants distinct names ([43e4bf2](https://github.com/roquerodrigo/midea-dishwasher-api/commit/43e4bf2501577da236f0809ed7d5b32a116aa2d5))
+* **security:** derive the session key with a length-strict zip ([c825f6a](https://github.com/roquerodrigo/midea-dishwasher-api/commit/c825f6a60ed3f978d351412b6a0183b4f37f1c6d))
+
+
+### Dependencies
+
+* **deps:** bump the python-deps group across 1 directory with 2 updates ([53dfb8e](https://github.com/roquerodrigo/midea-dishwasher-api/commit/53dfb8ee894d646acf44911ac5624659daecd1e7))
+
+
+### Documentation
+
+* describe the real release and testing setup ([755c2cc](https://github.com/roquerodrigo/midea-dishwasher-api/commit/755c2ccd051ee5b3421acae76cc21b929a0b42d1))
+* record the lint, typing and interpreter-support policy ([1d52d11](https://github.com/roquerodrigo/midea-dishwasher-api/commit/1d52d116ae298bd33a5f87bdc45f00d1e41429d0))
+
+
+### Continuous Integration
+
+* analyse pull requests opened against any branch ([8f756c5](https://github.com/roquerodrigo/midea-dishwasher-api/commit/8f756c508c94ec685a35095cb248a8ba7c5c3472))
+* run the suite on the oldest supported interpreter ([72ae87c](https://github.com/roquerodrigo/midea-dishwasher-api/commit/72ae87c80ac8aa32f5f6615d912a9297a20da288))
+
+
+### Miscellaneous Chores
+
+* declare the Python floor the source actually requires ([ab5abb4](https://github.com/roquerodrigo/midea-dishwasher-api/commit/ab5abb466cb6de5bd51a79cecb225b713d9a0f68))
+* move CI to the shared workflows repository ([e0a8b14](https://github.com/roquerodrigo/midea-dishwasher-api/commit/e0a8b14b6dd23631e1797c1026ea2fdfc2af042b))
+* release on every conventional commit type ([103898a](https://github.com/roquerodrigo/midea-dishwasher-api/commit/103898a8b634e8678a365d15d34c20885ee1de6d))
+* translate the PyPI description and test docstrings to English ([f13638e](https://github.com/roquerodrigo/midea-dishwasher-api/commit/f13638e50276c44d4e37c0332c27e6744410cc05))
+* untrack IDE settings and run lint hooks through uv ([f0a9ed9](https://github.com/roquerodrigo/midea-dishwasher-api/commit/f0a9ed96708c2218a8b4d539ca0b10f72e13d0ab))
+
 ## [1.3.5](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.4...v1.3.5) (2026-08-03)
 
 
