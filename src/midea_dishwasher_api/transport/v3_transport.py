@@ -86,7 +86,11 @@ class V3Transport:
     def connect(self) -> None:
         """Open the TCP connection and complete the V3 handshake."""
         log.debug("connecting to %s:%d", self.host, self.port)
-        self._sock = socket.create_connection((self.host, self.port), timeout=self._timeout)
+        try:
+            self._sock = socket.create_connection((self.host, self.port), timeout=self._timeout)
+        except OSError as error:
+            msg = f"Failed to connect to {self.host}:{self.port}: {error}"
+            raise V3Error(msg) from error
         self._handshake()
 
     def close(self) -> None:
@@ -132,7 +136,12 @@ class V3Transport:
 
     def _send_all(self, data: bytes) -> None:
         """Write every byte to the socket."""
-        self._connected_socket().sendall(data)
+        sock = self._connected_socket()
+        try:
+            sock.sendall(data)
+        except OSError as error:
+            msg = f"Failed to send request: {error}"
+            raise V3Error(msg) from error
 
     def _recv_packet(self) -> bytes:
         """Read one whole 8370 packet off the socket."""
@@ -149,7 +158,11 @@ class V3Transport:
         sock = self._connected_socket()
         buffer = bytearray()
         while len(buffer) < size:
-            chunk = sock.recv(size - len(buffer))
+            try:
+                chunk = sock.recv(size - len(buffer))
+            except OSError as error:
+                msg = f"Failed to read response: {error}"
+                raise V3Error(msg) from error
             if not chunk:
                 msg = f"Failed to read response: closed after {len(buffer)}/{size} bytes"
                 raise V3Error(msg)
