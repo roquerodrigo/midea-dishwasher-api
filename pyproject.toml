@@ -4,7 +4,7 @@ version = "1.3.6"
 description = "Python client for Midea dishwashers (device_type 0xE1, plugin v5) — AA frame codec + LAN V3 transport."
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 authors = [
     { name = "Rodrigo Roque", email = "rodrigogoncalvesroque@gmail.com" },
 ]
@@ -16,9 +16,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Home Automation",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -70,7 +67,7 @@ lint = [
 default-groups = ["dev", "lint"]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py314"
 line-length = 100
 src = ["src", "tests"]
 exclude = ["scripts"]
@@ -106,7 +103,7 @@ ignore = [
 ]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.14"
 strict = true
 files = ["src"]
 disallow_any_explicit = true

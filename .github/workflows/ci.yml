@@ -22,17 +22,9 @@ jobs:
     needs: lint
     uses: roquerodrigo/workflows/.github/workflows/python-test.yml@main
 
-  # `requires-python` is a promise to consumers, so the oldest interpreter the
-  # package claims to support runs the suite too, not only the newest.
-  tests-oldest-python:
-    needs: lint
-    uses: roquerodrigo/workflows/.github/workflows/python-test.yml@main
-    with:
-      python-version: "3.11"
-
   update-pr-branch:
     if: github.event_name == 'pull_request'
-    needs: [lint, tests, tests-oldest-python]
+    needs: [lint, tests]
     permissions:
       contents: write
       pull-requests: write

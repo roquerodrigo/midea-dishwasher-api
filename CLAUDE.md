@@ -24,7 +24,7 @@ The two hand-written docs are authoritative; read them before touching code:
 
 ## Workflow gotchas
 
-- `requires-python = ">=3.11"`, the lowest interpreter the source runs on.
+- `requires-python = ">=3.14"`, the floor Home Assistant declares.
   `[tool.ruff] target-version`, `[tool.mypy] python_version` and the
   `Programming Language :: Python :: 3.x` classifiers track it — a guard test
   fails if they drift. Bumping the floor is a `BREAKING CHANGE:`.
