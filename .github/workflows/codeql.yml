@@ -3,8 +3,9 @@ name: CodeQL
 on:
   push:
     branches: [main]
+  # No base-branch filter: the analysis is a required check, so it has to run on
+  # every pull request, including one stacked on another pull request.
   pull_request:
-    branches: [main]
   schedule:
     - cron: "0 0 * * 0"
 
