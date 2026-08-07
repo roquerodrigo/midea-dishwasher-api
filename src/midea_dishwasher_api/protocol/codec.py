@@ -19,7 +19,7 @@ class ControlPayload(TypedDict, total=False):
 
 SYNC = 0xAA
 DEVICE_TYPE = 0xE1
-HEADER_LEN = 10
+FRAME_HEADER_LEN = 10
 _OFFSET_MSG_TYPE = 9
 CONTROL_BODY_LEN = 38
 QUERY_BODY = b"\x00"
@@ -54,20 +54,20 @@ def make_sum(buffer: bytes | bytearray, start: int, end_inclusive: int) -> int:
 
 def assemble_frame(body: bytes | bytearray, msg_type: int) -> bytes:
     """Wrap a body in the application header and append the checksum."""
-    total = HEADER_LEN + len(body) + 1
+    total = FRAME_HEADER_LEN + len(body) + 1
     frame = bytearray(total)
     frame[0] = SYNC
     frame[1] = total - 1
     frame[2] = DEVICE_TYPE
     frame[_OFFSET_MSG_TYPE] = msg_type
-    frame[HEADER_LEN : HEADER_LEN + len(body)] = body
+    frame[FRAME_HEADER_LEN : FRAME_HEADER_LEN + len(body)] = body
     frame[-1] = make_sum(frame, 1, total - 2)
     return bytes(frame)
 
 
 def parse_frame(frame: bytes) -> tuple[int, bytes]:
     """Validate a frame and return its message type and body."""
-    if len(frame) < HEADER_LEN + 1:
+    if len(frame) < FRAME_HEADER_LEN + 1:
         msg = f"Failed to parse frame: too short, {len(frame)} bytes"
         raise FrameError(msg)
     if frame[0] != SYNC:
@@ -84,7 +84,7 @@ def parse_frame(frame: bytes) -> tuple[int, bytes]:
     if expected != frame[-1]:
         msg = f"Failed to parse frame: checksum 0x{frame[-1]:02x}, expected 0x{expected:02x}"
         raise FrameError(msg)
-    return frame[_OFFSET_MSG_TYPE], bytes(frame[HEADER_LEN:-1])
+    return frame[_OFFSET_MSG_TYPE], bytes(frame[FRAME_HEADER_LEN:-1])
 
 
 def build_query() -> bytes:

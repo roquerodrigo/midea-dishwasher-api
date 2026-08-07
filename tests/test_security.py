@@ -8,7 +8,7 @@ from hashlib import sha256
 import pytest
 
 from midea_dishwasher_api.security import (
-    HEADER_LEN,
+    PACKET_HEADER_LEN,
     PACKET_ID_LEN,
     SIGN_LEN,
     TYPE_ENCRYPTED_REQUEST,
@@ -36,12 +36,12 @@ KEY = bytes.fromhex("ab02a6952e5647c5bf0253d2b06f8e68687a2a2b5b3641e4bfee81d3f62
 def test_handshake_packet_layout() -> None:
     sec = Security()
     pkt = sec.handshake_request(TOKEN)
-    assert len(pkt) == HEADER_LEN + PACKET_ID_LEN + 64
+    assert len(pkt) == PACKET_HEADER_LEN + PACKET_ID_LEN + 64
     assert pkt[:2] == b"\x83\x70"
     assert (pkt[2] << 8) | pkt[3] == 64
     assert pkt[4] == 0x20
     assert pkt[5] == TYPE_HANDSHAKE_REQUEST
-    assert pkt[HEADER_LEN + PACKET_ID_LEN :] == TOKEN
+    assert pkt[PACKET_HEADER_LEN + PACKET_ID_LEN :] == TOKEN
 
 
 def test_authenticate_with_valid_handshake_response() -> None:
@@ -83,7 +83,7 @@ def test_v3_encode_pad_and_size() -> None:
     assert (12 + PACKET_ID_LEN + pad) % 16 == 0
     size = (pkt[2] << 8) | pkt[3]
     assert size == 12 + pad + SIGN_LEN
-    assert len(pkt) == HEADER_LEN + PACKET_ID_LEN + 12 + pad + SIGN_LEN
+    assert len(pkt) == PACKET_HEADER_LEN + PACKET_ID_LEN + 12 + pad + SIGN_LEN
 
 
 def test_v3_encode_decode_roundtrip() -> None:
@@ -97,8 +97,10 @@ def test_v3_encode_decode_roundtrip() -> None:
     pad = (pkt[5] >> 4) & 0xF
     flipped = bytearray(pkt)
     flipped[5] = (pad << 4) | TYPE_ENCRYPTED_RESPONSE
-    plaintext = aes_cbc_decrypt(bytes(flipped[HEADER_LEN:-SIGN_LEN]), sec.tcp_key, b"\x00" * 16)
-    flipped[-SIGN_LEN:] = sha256(bytes(flipped[:HEADER_LEN]) + plaintext).digest()
+    plaintext = aes_cbc_decrypt(
+        bytes(flipped[PACKET_HEADER_LEN:-SIGN_LEN]), sec.tcp_key, b"\x00" * 16
+    )
+    flipped[-SIGN_LEN:] = sha256(bytes(flipped[:PACKET_HEADER_LEN]) + plaintext).digest()
     msg_type, body = sec.decode(bytes(flipped))
     assert msg_type == TYPE_ENCRYPTED_RESPONSE
     assert body == data

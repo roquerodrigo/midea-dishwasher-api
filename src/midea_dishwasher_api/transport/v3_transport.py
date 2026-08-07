@@ -8,9 +8,9 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Self
 
 from ..security import (
-    HEADER_LEN,
     KEY_LEN,
     MAGIC,
+    PACKET_HEADER_LEN,
     PACKET_ID_LEN,
     TOKEN_LEN,
     TYPE_ENCRYPTED_RESPONSE,
@@ -136,7 +136,7 @@ class V3Transport:
 
     def _recv_packet(self) -> bytes:
         """Read one whole 8370 packet off the socket."""
-        head = self._recv_exact(HEADER_LEN)
+        head = self._recv_exact(PACKET_HEADER_LEN)
         if head[:2] != MAGIC:
             msg = f"Failed to read response: bad magic {head[:2].hex()}"
             raise V3Error(msg)

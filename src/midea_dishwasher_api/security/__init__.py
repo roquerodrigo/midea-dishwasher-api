@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .crypto import (
     AES_BLOCK_LEN,
-    HEADER_LEN,
+    PACKET_HEADER_LEN,
     PACKET_ID_LEN,
     SIGN_LEN,
     TYPE_ENCRYPTED_REQUEST,
@@ -27,9 +27,9 @@ from .v3_error import V3Error
 
 __all__ = [
     "AES_BLOCK_LEN",
-    "HEADER_LEN",
     "KEY_LEN",
     "MAGIC",
+    "PACKET_HEADER_LEN",
     "PACKET_ID_LEN",
     "SIGN_LEN",
     "TOKEN_LEN",
