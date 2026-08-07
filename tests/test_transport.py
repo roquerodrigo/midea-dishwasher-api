@@ -31,7 +31,7 @@ KEY = bytes.fromhex("ab02a6952e5647c5bf0253d2b06f8e68687a2a2b5b3641e4bfee81d3f62
 
 
 class FakeSocket:
-    """Socket falso: serve bytes de uma fila e grava tudo que for enviado."""
+    """Fake socket: serves bytes from a queue and records everything sent."""
 
     def __init__(self, inbound: bytes) -> None:
         self._inbound = bytearray(inbound)
@@ -51,7 +51,7 @@ class FakeSocket:
 
 
 def _handshake_response(plain: bytes) -> bytes:
-    """8370 type=1 com payload AES(plain)+sha256(plain), igual ao device."""
+    """8370 type=1 with an AES(plain)+sha256(plain) payload, like the device sends."""
     body = aes_cbc_encrypt(plain, KEY, b"\x00" * 16) + sha256(plain).digest()
     return b"\x83\x70" + (64).to_bytes(2, "big") + b"\x20\x01" + b"\x00\x00" + body
 
@@ -83,7 +83,7 @@ def _status_aa() -> bytes:
 
 
 def _patch_socket(monkeypatch: pytest.MonkeyPatch, fake: FakeSocket) -> list[object]:
-    """Faz socket.create_connection devolver o socket falso e registra args."""
+    """Make socket.create_connection return the fake socket and record the args."""
     calls: list[object] = []
 
     def fake_create_connection(address: object, timeout: object = None) -> FakeSocket:
@@ -95,7 +95,7 @@ def _patch_socket(monkeypatch: pytest.MonkeyPatch, fake: FakeSocket) -> list[obj
 
 
 def _full_session_inbound() -> tuple[bytes, Security]:
-    """Bytes que o device enviaria: handshake response + um ENC_RESP de status."""
+    """Bytes the device would send: handshake response + one status ENC_RESP."""
     plain = os.urandom(32)
     sec = Security()
     sec.authenticate(_handshake_response(plain), KEY)
@@ -172,7 +172,7 @@ def test_close_is_idempotent_and_safe_without_socket() -> None:
 
 
 def test_handshake_wrong_response_type_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    # frame ERROR (type=0xF) onde deveria vir um handshake response (type=1).
+    # an ERROR frame (type=0xF) where a handshake response (type=1) should arrive.
     # decodes without a tcp_key (not encrypted) and trips the type check
     from midea_dishwasher_api.security import TYPE_ERROR
 
@@ -194,7 +194,7 @@ def test_handshake_wrong_response_type_raises(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_recv_packet_bad_magic_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    # header com magic errado: 6 bytes suficientes para _recv_exact(PACKET_HEADER_LEN)
+    # header with a wrong magic: 6 bytes are enough for _recv_exact(PACKET_HEADER_LEN)
     bad = b"\x99\x99" + (64).to_bytes(2, "big") + b"\x20\x01"
     fake = FakeSocket(bad)
     _patch_socket(monkeypatch, fake)
@@ -232,7 +232,7 @@ def test_call_skips_non_enc_resp_frames(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_recv_exact_reassembles_fragmented_chunks() -> None:
-    """_recv_exact deve concatenar leituras parciais do socket."""
+    """_recv_exact must concatenate partial reads off the socket."""
 
     class DripSocket:
         def __init__(self, data: bytes) -> None:

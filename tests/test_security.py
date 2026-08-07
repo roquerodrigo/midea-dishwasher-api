@@ -1,4 +1,4 @@
-"""Testes da camada V3 (8370 + AES-CBC + SHA256) e V2 (5A5A + AES-ECB + MD5)."""
+"""Tests for the V3 layer (8370 + AES-CBC + SHA256) and V2 (5A5A + AES-ECB + MD5)."""
 
 from __future__ import annotations
 
@@ -87,8 +87,8 @@ def test_v3_encode_pad_and_size() -> None:
 
 
 def test_v3_encode_decode_roundtrip() -> None:
-    """Roundtrip 'fingindo ser device': cliente codifica como REQ, simulamos
-    o device alterando type para RESP e regerando o sign sobre o NOVO header."""
+    """Roundtrip impersonating the device: the client encodes a REQ, and we
+    simulate the device by flipping type to RESP and re-signing the NEW header."""
     from midea_dishwasher_api.security import aes_cbc_decrypt
 
     sec = _establish_session()

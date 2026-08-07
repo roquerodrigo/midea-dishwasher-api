@@ -1,4 +1,4 @@
-"""Casos de borda dos enums: bytes desconhecidos caem no fallback inteiro."""
+"""Enum edge cases: unknown bytes fall back to the plain integer."""
 
 from __future__ import annotations
 
