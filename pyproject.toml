@@ -4,7 +4,7 @@ version = "1.3.5"
 description = "Python client for Midea dishwashers (device_type 0xE1, plugin v5) — AA frame codec + LAN V3 transport."
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 authors = [
     { name = "Rodrigo Roque", email = "rodrigogoncalvesroque@gmail.com" },
 ]
@@ -16,6 +16,9 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Home Automation",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -67,7 +70,7 @@ lint = [
 default-groups = ["dev", "lint"]
 
 [tool.ruff]
-target-version = "py314"
+target-version = "py311"
 line-length = 100
 src = ["src", "tests"]
 exclude = ["scripts"]
@@ -77,7 +80,13 @@ exclude = ["*.md"]  # ruff 0.16 formats Python blocks in Markdown; docs keep the
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["ANN401", "D203", "D212", "COM812", "ISC001", "CPY001"]
+ignore = [
+    "COM812",   # conflicts with the formatter
+    "CPY001",   # licensing lives in LICENSE, not in a per-file header
+    "D203",     # incompatible with D211, which is the convention here
+    "D212",     # incompatible with D213, which is the convention here
+    "ISC001",   # conflicts with the formatter
+]
 
 [tool.ruff.lint.per-file-ignores]
 # The V2 layer mandates AES-ECB and MD5; both are the protocol's choice, not ours.
@@ -89,19 +98,17 @@ ignore = ["ANN401", "D203", "D212", "COM812", "ISC001", "CPY001"]
 "src/midea_dishwasher_api/state/*.py" = ["TID252"]
 "src/midea_dishwasher_api/transport/*.py" = ["TID252"]
 "tests/*" = [
-    "S101",     # assert is normal in pytest
-    "S105",     # hardcoded-password-string is fine for fake test credentials
-    "S106",     # hardcoded-password-func-arg is fine for fake test credentials
     "D",        # no docstrings required in tests
-    "ANN",      # no type annotations required in tests
     "PLC0415",  # local imports inside tests are intentional
-    "SLF001",   # testing private internals is intentional
     "PLR2004",  # magic numbers in test assertions are fine
+    "S101",     # assert is normal in pytest
+    "SLF001",   # testing private internals is intentional
 ]
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.11"
 strict = true
 files = ["src"]
+disallow_any_explicit = true
 warn_unreachable = true
 warn_unused_ignores = true
