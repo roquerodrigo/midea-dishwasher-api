@@ -3,8 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+  # No base-branch filter: a pull request stacked on another pull request has to
+  # be verified against the branch it will actually be merged into.
   pull_request:
-    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -21,9 +22,17 @@ jobs:
     needs: lint
     uses: roquerodrigo/workflows/.github/workflows/python-test.yml@main
 
+  # `requires-python` is a promise to consumers, so the oldest interpreter the
+  # package claims to support runs the suite too, not only the newest.
+  tests-oldest-python:
+    needs: lint
+    uses: roquerodrigo/workflows/.github/workflows/python-test.yml@main
+    with:
+      python-version: "3.11"
+
   update-pr-branch:
     if: github.event_name == 'pull_request'
-    needs: [lint, tests]
+    needs: [lint, tests, tests-oldest-python]
     permissions:
       contents: write
       pull-requests: write
