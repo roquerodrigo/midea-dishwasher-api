@@ -143,14 +143,15 @@ The SDK ships a `py.typed` marker so downstream consumers get type info.
 
 ## Pre-commit hooks
 
-`pre-commit` is recommended. Add `.pre-commit-config.yaml` mirroring the
-lint commands (ruff format, ruff check, mypy) and install once per clone:
+`pre-commit` is recommended. `.pre-commit-config.yaml` runs ruff format,
+ruff check and mypy as local hooks through `uv run`, so they always match
+the versions pinned in `uv.lock`. Install once per clone:
 
 ```bash
 pre-commit install
 ```
 
-The hook runs the same gates as CI on every commit. Skip it only on
+The hooks run the same gates as CI on every commit. Skip them only on an
 emergency `git commit --no-verify` and immediately re-run the lint commands.
 
 ## Conventional commits
@@ -192,9 +193,9 @@ generate `CHANGELOG.md`:
 - `release-please` runs on `main` and opens a release-PR with the next
   version + `CHANGELOG.md`. Merging that PR triggers the publish job:
   - Tags the release on GitHub.
-  - Builds sdist + wheel via `python -m build`.
-  - Publishes to PyPI via the `pypi` GitHub Environment + Trusted Publisher
-    (no token in repo secrets).
+  - Builds sdist + wheel via `uv build`.
+  - Publishes to PyPI through the `pypi` GitHub Environment, authenticating
+    with the `PYPI_API_TOKEN` repository secret.
 - Don't manually edit `pyproject.toml` `version` — release-please owns it.
 
 ## Testing
@@ -203,8 +204,9 @@ generate `CHANGELOG.md`:
   at **90%** (`--cov-fail-under=90`); keep protocol/codec/transport layers at
   or near 100% since they're the byte-level surface most likely to regress
   silently.
-- Hardware-dependent tests (real device connections) are gated behind an
-  env var and skipped in CI; pure unit tests use captured byte fixtures.
+- The suite never touches hardware: every frame is assembled byte by byte
+  from captured traffic. Real-device interaction lives in `scripts/`, which
+  is excluded from linting, typing and CI.
 
 ## Linting and verification
 
