@@ -110,7 +110,7 @@ class Security:
         if sha256(plain).digest() != sign:
             msg = "Failed to authenticate: signature mismatch, wrong key?"
             raise V3Error(msg)
-        self.tcp_key = bytes(p ^ k for p, k in zip(plain, key, strict=False))
+        self.tcp_key = bytes(p ^ k for p, k in zip(plain, key, strict=True))
 
     def encode(self, data: bytes) -> bytes:
         """Wrap application data in an encrypted, signed V3 frame."""
