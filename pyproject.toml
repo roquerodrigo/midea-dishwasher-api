@@ -1,6 +1,6 @@
 [project]
 name = "midea-dishwasher-api"
-version = "1.3.5"
+version = "1.3.6"
 description = "Python client for Midea dishwashers (device_type 0xE1, plugin v5) — AA frame codec + LAN V3 transport."
 readme = "README.md"
 license = { file = "LICENSE" }
