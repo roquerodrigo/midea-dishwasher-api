@@ -180,8 +180,18 @@ generate `CHANGELOG.md`:
 
 - Build backend: `hatchling`. Wheel and sdist contain
   `src/midea_dishwasher_api`.
-- `requires-python = ">=3.14"`. Don't bump this without a `BREAKING CHANGE:`
-  footer.
+- `requires-python = ">=3.11"` — the lowest interpreter the source actually
+  runs on (`enum.StrEnum`, `datetime.UTC` and `typing.Self` are the 3.11-only
+  APIs in use). The floor is a property of the code, not of the machine that
+  happens to build it: raising it locks out standalone consumers, so it moves
+  up only when a language or standard-library feature makes it unavoidable, and
+  then with a `BREAKING CHANGE:` footer.
+- **Four settings state a Python version and must agree**: `requires-python`,
+  the `Programming Language :: Python :: 3.x` classifiers (one per supported
+  version, the lowest matching the floor), `[tool.ruff] target-version` and
+  `[tool.mypy] python_version`. The last two pin the *floor*, so both linters
+  reject syntax the oldest supported interpreter cannot parse.
+  `tests/test_packaging_config.py` fails the build if they drift apart.
 - Public dependencies: keep them minimal and use `>=` lower bounds, not
   pins. The SDK is meant to coexist with arbitrary downstream resolvers.
 - The `[dependency-groups]` `dev` and `lint` groups carry the test-only and
@@ -207,6 +217,9 @@ generate `CHANGELOG.md`:
 - The suite never touches hardware: every frame is assembled byte by byte
   from captured traffic. Real-device interaction lives in `scripts/`, which
   is excluded from linting, typing and CI.
+- CI runs the suite twice: on the newest interpreter and on the floor declared
+  by `requires-python`. Locally, `uv run --python 3.11 pytest` reproduces the
+  second run.
 
 ## Linting and verification
 
@@ -215,6 +228,20 @@ generate `CHANGELOG.md`:
   `ignore` and `per-file-ignores`. The MD5/ECB primitives the V2 layer mandates
   are exempted per file rather than inline — an inline `# noqa` rewrites the
   source line, and CodeQL then reports the long-standing finding as a new one.
-- Mypy configuration in `pyproject.toml` under `[tool.mypy]` (strict).
+- **An exemption is earned, not inherited.** Every entry in `ignore` and
+  `per-file-ignores` carries a comment saying why, and an entry that no longer
+  matches a single line in the tree is deleted rather than kept "just in case" —
+  a dead exemption silently permits the very thing the rule was selected for.
+  Measure before adding or removing one:
+  `uv run ruff check --isolated --select <RULE> <path>`.
+- Scope an exemption to the narrowest path that needs it. Repository-wide
+  entries are for rules that genuinely conflict with the formatter (`COM812`,
+  `ISC001`) or with another selected rule (`D203`/`D212`, whose counterparts
+  `D211`/`D213` are the conventions in force here).
+- Mypy configuration in `pyproject.toml` under `[tool.mypy]`: `strict = true`
+  plus `disallow_any_explicit`, `warn_unreachable` and `warn_unused_ignores`.
+  Explicit `Any` is banned outright — when a third-party stub forces one, the
+  inline ignore sits on that single line with the reason next to it, never as a
+  module-level or repository-wide override.
 - After every change run the three-step lint pipeline + `pytest`. Both
   gates mirror CI.
