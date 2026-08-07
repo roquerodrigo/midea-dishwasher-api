@@ -24,7 +24,10 @@ The two hand-written docs are authoritative; read them before touching code:
 
 ## Workflow gotchas
 
-- `requires-python = ">=3.14"`. Bumping it is a `BREAKING CHANGE:`.
+- `requires-python = ">=3.11"`, the lowest interpreter the source runs on.
+  `[tool.ruff] target-version`, `[tool.mypy] python_version` and the
+  `Programming Language :: Python :: 3.x` classifiers track it — a guard test
+  fails if they drift. Bumping the floor is a `BREAKING CHANGE:`.
 - Verify before committing: `uv run ruff format . && uv run ruff check . --fix &&
   uv run mypy src && uv run pytest`. All four must be clean. Coverage gate is 90%
   (`--cov-fail-under=90`).
