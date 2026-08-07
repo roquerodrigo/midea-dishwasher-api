@@ -17,7 +17,7 @@ def test_version_is_exposed() -> None:
 
 
 def test_version_fallback_when_not_installed(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Sem metadata instalada, __version__ cai para o sentinela local."""
+    """Without installed metadata, __version__ falls back to the local sentinel."""
 
     def boom(_name: str) -> str:
         raise PackageNotFoundError
