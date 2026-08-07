@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Conecta na lava-louças real via LAN V3 e exercita as operações.
+"""Connect to the real dishwasher over LAN V3 and exercise the operations.
 
-Uso:
-    uv pip install -e ".[lan]"
-    python scripts/test_device.py                    # query (default)
-    python scripts/test_device.py --power-on
-    python scripts/test_device.py --power-off
-    python scripts/test_device.py --start eco        # inicia ciclo eco
-    python scripts/test_device.py --bright 3         # define abrilhantador
-    python scripts/test_device.py --debug            # imprime bytes na thread
+Usage:
+    uv run python scripts/test_device.py                    # query (default)
+    uv run python scripts/test_device.py --power-on
+    uv run python scripts/test_device.py --power-off
+    uv run python scripts/test_device.py --start eco        # start the eco cycle
+    uv run python scripts/test_device.py --bright 3         # set the rinse-aid level
+    uv run python scripts/test_device.py --debug            # print wire bytes
 """
 
 from __future__ import annotations
@@ -19,19 +18,10 @@ import sys
 import time
 from pathlib import Path
 
+from device_env import load_env
+
 from midea_dishwasher_api import BrightLevel, Client, DishwasherStatus, Mode
 from midea_dishwasher_api.transport import V3Transport
-
-
-def load_env(path: Path) -> dict[str, str]:
-    out: dict[str, str] = {}
-    for raw in path.read_text().splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        out[k.strip()] = v.strip().strip("\"'")
-    return out
 
 
 def _hex_dump(direction: str, data: bytes) -> None:
@@ -46,31 +36,31 @@ def _print_status(s: DishwasherStatus) -> None:
     print(f"  left_time     = {f'{s.left_time} min' if s.left_time is not None else '-'}")
     print(f"  error_code    = {s.error_code.name if hasattr(s.error_code, 'name') else s.error_code}")
     print(f"  door_closed   = {s.door_closed}")
-    print(f"  bright_lack   = {s.bright_lack}  (secante acabou)")
+    print(f"  bright_lack   = {s.bright_lack}  (rinse aid ran out)")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", type=Path, default=Path(__file__).parent.parent / ".env")
-    parser.add_argument("--debug", action="store_true", help="imprime bytes na thread")
+    parser.add_argument("--debug", action="store_true", help="print wire bytes")
     parser.add_argument(
         "--start", metavar="MODE",
-        help="inicia ciclo no modo dado (auto, eco, intensive, normal, …)",
+        help="start a cycle in the given mode (auto, eco, intensive, normal, …)",
     )
     parser.add_argument(
         "--extra-dry", action="store_true",
-        help="ativa secagem extra ao iniciar o ciclo (additional=1)",
+        help="enable extra drying when starting the cycle (additional=1)",
     )
     parser.add_argument("--power-on", action="store_true")
     parser.add_argument("--power-off", action="store_true")
-    parser.add_argument("--stop", action="store_true", help="cancela ciclo em andamento")
+    parser.add_argument("--stop", action="store_true", help="cancel the running cycle")
     parser.add_argument(
         "--bright", type=lambda s: BrightLevel(int(s)),
-        help="abrilhantador 1..5",
+        help="rinse-aid level 1..5",
     )
     parser.add_argument(
         "--refresh-after", type=float, default=3.0,
-        help="segundos para aguardar antes da query final (default 3.0)",
+        help="seconds to wait before the final query (default 3.0)",
     )
     args = parser.parse_args()
 
@@ -120,7 +110,7 @@ def main() -> int:
             ran_action = True
 
         if ran_action:
-            print(f"... aguardando {args.refresh_after}s para a máquina atualizar")
+            print(f"... waiting {args.refresh_after}s for the machine to update")
             time.sleep(args.refresh_after)
 
         print(">>> query_status()")

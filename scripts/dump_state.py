@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Faz query e despeja todos os bytes do body indexados.
+"""Query the device and dump every body byte with its index.
 
-Uso:
-    python scripts/dump_state.py > tmp/state_before.txt
-    # (reinicia/limpa o filtro na máquina)
-    python scripts/dump_state.py > tmp/state_after.txt
+Usage:
+    uv run python scripts/dump_state.py > tmp/state_before.txt
+    # (restart / clear the filter warning on the machine)
+    uv run python scripts/dump_state.py > tmp/state_after.txt
     diff tmp/state_before.txt tmp/state_after.txt
 """
 
@@ -14,20 +14,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from midea_dishwasher_api import build_query
-from midea_dishwasher_api.protocol import parse_frame
+from device_env import load_env
+
+from midea_dishwasher_api.protocol import build_query, parse_frame
 from midea_dishwasher_api.transport import V3Transport
-
-
-def load_env(path: Path) -> dict[str, str]:
-    out: dict[str, str] = {}
-    for raw in path.read_text().splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        out[k.strip()] = v.strip().strip("\"'")
-    return out
 
 
 def main() -> int:
