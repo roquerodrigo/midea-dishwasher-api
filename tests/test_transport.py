@@ -258,3 +258,63 @@ def test_recv_packet_reads_full_frame_by_size() -> None:
     t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
     t._sock = fake  # type: ignore[assignment]
     assert t._recv_packet() == head + payload
+
+
+def test_connect_refused_raises_v3error(monkeypatch: pytest.MonkeyPatch) -> None:
+    def refuse(*_args: object, **_kwargs: object) -> FakeSocket:
+        raise ConnectionRefusedError(111, "Connection refused")
+
+    monkeypatch.setattr(socket, "create_connection", refuse)
+
+    t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
+    with pytest.raises(V3Error, match=r"Failed to connect to 1\.2\.3\.4:6444") as excinfo:
+        t.connect()
+    assert isinstance(excinfo.value.__cause__, ConnectionRefusedError)
+
+
+def test_connect_timeout_raises_v3error(monkeypatch: pytest.MonkeyPatch) -> None:
+    def time_out(*_args: object, **_kwargs: object) -> FakeSocket:
+        raise TimeoutError
+
+    monkeypatch.setattr(socket, "create_connection", time_out)
+
+    t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
+    with pytest.raises(V3Error, match="Failed to connect") as excinfo:
+        t.connect()
+    assert isinstance(excinfo.value.__cause__, TimeoutError)
+
+
+def test_send_socket_error_raises_v3error() -> None:
+    class BrokenSendSocket:
+        def sendall(self, _data: bytes) -> None:
+            raise BrokenPipeError(32, "Broken pipe")
+
+    t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
+    t._sock = BrokenSendSocket()  # type: ignore[assignment]
+    with pytest.raises(V3Error, match="Failed to send request") as excinfo:
+        t._send_all(b"\x00")
+    assert isinstance(excinfo.value.__cause__, BrokenPipeError)
+
+
+def test_recv_socket_error_raises_v3error() -> None:
+    class BrokenRecvSocket:
+        def recv(self, _n: int) -> bytes:
+            raise ConnectionResetError(104, "Connection reset by peer")
+
+    t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
+    t._sock = BrokenRecvSocket()  # type: ignore[assignment]
+    with pytest.raises(V3Error, match="Failed to read response") as excinfo:
+        t._recv_exact(4)
+    assert isinstance(excinfo.value.__cause__, ConnectionResetError)
+
+
+def test_recv_timeout_raises_v3error() -> None:
+    class TimeoutRecvSocket:
+        def recv(self, _n: int) -> bytes:
+            raise TimeoutError
+
+    t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
+    t._sock = TimeoutRecvSocket()  # type: ignore[assignment]
+    with pytest.raises(V3Error, match="Failed to read response") as excinfo:
+        t._recv_exact(4)
+    assert isinstance(excinfo.value.__cause__, TimeoutError)
