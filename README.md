@@ -3,6 +3,8 @@
 [![CI](https://github.com/roquerodrigo/midea-dishwasher-api/actions/workflows/ci.yml/badge.svg)](https://github.com/roquerodrigo/midea-dishwasher-api/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/midea-dishwasher-api)](https://pypi.org/project/midea-dishwasher-api/)
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=githubsponsors&logoColor=white&style=for-the-badge)](https://github.com/sponsors/roquerodrigo)
+
 Python client for Midea dishwashers (`device_type 0xE1`, plugin v5).
 
 Implements the `AA … E1` application protocol and the LAN V3 transport (8370
@@ -104,6 +106,10 @@ outside the public `__init__.py`.
 They are per-device credentials issued by the Midea cloud. Use one of the
 existing tools (`midea-msmart`, `midea-beautiful-air`, `midea-discover`) to
 extract them from your app account.
+
+## Support
+
+This SDK is built and maintained on personal time, on hardware bought for the purpose. If it is useful to you, consider [sponsoring the work](https://github.com/sponsors/roquerodrigo) — it keeps the devices, the testing and the releases coming.
 
 ## License
 
