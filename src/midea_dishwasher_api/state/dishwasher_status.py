@@ -32,3 +32,5 @@ class DishwasherStatus:
     door_closed: bool = False
     bright_lack: bool = False
     bright: BrightLevel | int | None = None
+    softwater_lack: bool = False
+    temperature: int | None = None

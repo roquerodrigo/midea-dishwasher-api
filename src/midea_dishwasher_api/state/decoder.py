@@ -21,11 +21,13 @@ _OFFSET_FLAGS5 = 5
 _OFFSET_LEFT_TIME_LOW = 6
 _OFFSET_WASH_STAGE = 9
 _OFFSET_ERROR_CODE = 10
+_OFFSET_TEMPERATURE = 11
 _OFFSET_BRIGHT = 24
 _OFFSET_LEFT_TIME_HIGH = 32
 
 _FLAG_DOOR_CLOSED = 0x01
 _FLAG_BRIGHT_LACK = 0x02
+_FLAG_SALT_LACK = 0x04
 
 _ACK_OPCODE = 0x01
 
@@ -62,12 +64,16 @@ def _decode_body(body: bytes, status: DishwasherStatus) -> None:
     flags = _byte_at(body, _OFFSET_FLAGS5) or 0
     status.door_closed = bool(flags & _FLAG_DOOR_CLOSED)
     status.bright_lack = bool(flags & _FLAG_BRIGHT_LACK)
+    status.softwater_lack = bool(flags & _FLAG_SALT_LACK)
 
     if (wash_stage := _byte_at(body, _OFFSET_WASH_STAGE)) is not None:
         status.wash_stage = WashStage.from_byte(wash_stage)
 
     if (error_code := _byte_at(body, _OFFSET_ERROR_CODE)) is not None:
         status.error_code = ErrorCode.from_byte(error_code)
+
+    if (temperature := _byte_at(body, _OFFSET_TEMPERATURE)) is not None:
+        status.temperature = temperature
 
     if (bright := _byte_at(body, _OFFSET_BRIGHT)) is not None:
         status.bright = BrightLevel.from_byte(bright)

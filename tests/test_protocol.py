@@ -201,3 +201,27 @@ def test_ack_only_frame() -> None:
     frame = assemble_frame(bytes(body), 0x02)
     s = decode_response(frame)
     assert s.ack_only is True
+
+
+def test_decode_response_salt_lack_flag() -> None:
+    body = bytearray(46)
+    body[0] = 0x08
+    body[1] = 0x01
+    body[5] = 0x04  # bit2 = salt/softwater lack
+    frame = assemble_frame(bytes(body), 0x02)
+
+    s = decode_response(frame)
+    assert s.softwater_lack is True
+    assert s.door_closed is False
+    assert s.bright_lack is False
+
+
+def test_decode_response_temperature() -> None:
+    body = bytearray(46)
+    body[0] = 0x08
+    body[1] = 0x01
+    body[11] = 25
+    frame = assemble_frame(bytes(body), 0x02)
+
+    s = decode_response(frame)
+    assert s.temperature == 25
