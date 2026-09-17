@@ -76,6 +76,8 @@ Fields decoded from a response:
 - `door_closed: bool`
 - `bright_lack: bool` — the rinse aid ran out
 - `bright: BrightLevel | int | None` — current rinse-aid level (1–5)
+- `softwater_lack: bool` — the salt for water softening ran out
+- `temperature: int | None` — tub water temperature in °C
 
 ### Available programs (`Mode`)
 
