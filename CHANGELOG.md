@@ -1,5 +1,38 @@
 # Changelog
 
+## [2.0.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.6...v2.0.0) (2026-09-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* Python 3.11, 3.12 and 3.13 are no longer supported. Consumers on those interpreters must stay on 1.3.6.
+
+### Features
+
+* decode salt-lack and temperature from E1 status frame ([ec50056](https://github.com/roquerodrigo/midea-dishwasher-api/commit/ec500569ba11cb4f89fde2a497885a58511bfdfe))
+
+
+### Dependencies
+
+* **deps:** bump the python-deps group across 1 directory with 2 updates ([165ca99](https://github.com/roquerodrigo/midea-dishwasher-api/commit/165ca9975db6d3a67f8798f047baa5801c0c092f))
+
+
+### Development Dependencies
+
+* **deps-dev:** bump ruff in the python-deps group ([9ff0699](https://github.com/roquerodrigo/midea-dishwasher-api/commit/9ff0699d95839d2e7a0eaee3798beeec73a59d1d))
+* **deps-dev:** bump the python-deps group across 1 directory with 2 updates ([6175818](https://github.com/roquerodrigo/midea-dishwasher-api/commit/617581891685a8edcc236b9265550b7a3d5fb90c))
+
+
+### Documentation
+
+* add GitHub Sponsors button and support section ([00abbf1](https://github.com/roquerodrigo/midea-dishwasher-api/commit/00abbf11f3eeed11c57e4def507a6c919ad383ee))
+* document softwater_lack and temperature status fields ([5bba915](https://github.com/roquerodrigo/midea-dishwasher-api/commit/5bba91587c373039c644388d82b5644feb5cc2d3))
+
+
+### Build System
+
+* require Python 3.14 ([3632046](https://github.com/roquerodrigo/midea-dishwasher-api/commit/3632046da81b27419b6de67fe65848428ba1b784))
+
 ## [1.3.6](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.5...v1.3.6) (2026-08-07)
 
 
