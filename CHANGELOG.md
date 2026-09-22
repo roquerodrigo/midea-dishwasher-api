@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v2.0.0...v2.0.1) (2026-09-22)
+
+
+### Development Dependencies
+
+* **deps-dev:** bump ruff in the python-deps group ([0999ad3](https://github.com/roquerodrigo/midea-dishwasher-api/commit/0999ad378986a8297237d77e335bfcae34d35ca0))
+
 ## [2.0.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.6...v2.0.0) (2026-09-17)
 
 
