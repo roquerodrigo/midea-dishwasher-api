@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.0.1](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v2.0.0...v2.0.1) (2026-09-30)
+
+
+### Development Dependencies
+
+* **deps-dev:** bump ruff in the python-deps group ([e102337](https://github.com/roquerodrigo/midea-dishwasher-api/commit/e102337ff616ae70e4fb5d138b4ed6c18fdc4dea))
+* **deps-dev:** bump ruff in the python-deps group ([0999ad3](https://github.com/roquerodrigo/midea-dishwasher-api/commit/0999ad378986a8297237d77e335bfcae34d35ca0))
+
+
+### Build System
+
+* **release:** bump uv.lock through release-please ([d0ceae8](https://github.com/roquerodrigo/midea-dishwasher-api/commit/d0ceae8b20909314d76521ed3a0ac7759ef99c01))
+
 ## [2.0.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.6...v2.0.0) (2026-09-17)
 
 
