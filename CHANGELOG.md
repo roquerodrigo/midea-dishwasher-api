@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v2.0.0...v2.0.1) (2026-10-14)
+
+
+### Miscellaneous Chores
+
+* **release:** keep only user-facing changes in the changelog ([10690a2](https://github.com/roquerodrigo/midea-dishwasher-api/commit/10690a26a524b5e1bea162d379db1d921f2bd109))
+
 ## [2.0.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.6...v2.0.0) (2026-09-17)
 
 
