@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.0.1](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v2.0.0...v2.0.1) (2026-10-31)
+
+Internal maintenance only, with no changes for those who use the project.
+
 ## [2.0.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.6...v2.0.0) (2026-09-17)
 
 
