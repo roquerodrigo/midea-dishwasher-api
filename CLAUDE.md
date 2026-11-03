@@ -42,10 +42,10 @@ The two hand-written docs are authoritative; read them before touching code:
 - `scripts/` is excluded from ruff and from mypy (`files = ["src"]`); those
   scripts hit a **real device** using a repo-root `.env` (host, device_id, token,
   key) and are not run in CI. Do not rely on them for verification.
-- `release-please` owns `pyproject.toml` `version`, `CHANGELOG.md` and this
-  package's own `version` entry in `uv.lock` (declared as an `extra-files` entry
-  in `release-please-config.json`) — never hand-edit any of them. Merging its
-  release PR publishes to PyPI through the `pypi` GitHub Environment,
+- Release Autopilot owns `pyproject.toml` `version`, `CHANGELOG.md` and this
+  package's own `version` entry in `uv.lock` (both version files are detected
+  automatically) — never hand-edit any of them. Merging its release PR
+  publishes to PyPI through the `pypi` GitHub Environment,
   authenticating with the `PYPI_API_TOKEN` secret.
 - Public repo with branch protection: land changes via PR with green CI, and
   merge with **rebase merge only** (squash/merge-commit are disabled). Start a
