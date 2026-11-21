@@ -13,7 +13,7 @@ from hashlib import sha256
 
 import pytest
 
-from midea_dishwasher_api.protocol import assemble_frame
+from midea_dishwasher_api.protocol import assemble_frame, build_control, build_query
 from midea_dishwasher_api.security import (
     PACKET_HEADER_LEN,
     PACKET_ID_LEN,
@@ -27,14 +27,17 @@ from midea_dishwasher_api.transport import V3Transport
 
 DEVICE_ID = 151732606394621
 TOKEN = os.urandom(64)
+QUERY_AA = build_query()
+CONTROL_AA = build_control({"machine_state": "power_off"})
 KEY = bytes.fromhex("ab02a6952e5647c5bf0253d2b06f8e68687a2a2b5b3641e4bfee81d3f6291475")
 
 
 class FakeSocket:
     """Fake socket: serves bytes from a queue and records everything sent."""
 
-    def __init__(self, inbound: bytes) -> None:
+    def __init__(self, inbound: bytes, *, silent_when_drained: bool = False) -> None:
         self._inbound = bytearray(inbound)
+        self._silent_when_drained = silent_when_drained
         self.sent = bytearray()
         self.closed = False
 
@@ -42,12 +45,17 @@ class FakeSocket:
         self.sent.extend(data)
 
     def recv(self, n: int) -> bytes:
+        if self._silent_when_drained and not self._inbound:
+            raise TimeoutError
         chunk = bytes(self._inbound[:n])
         del self._inbound[:n]
         return chunk
 
     def close(self) -> None:
         self.closed = True
+
+    def settimeout(self, value: float) -> None:
+        self.timeout = value
 
 
 def _handshake_response(plain: bytes) -> bytes:
@@ -75,11 +83,11 @@ def _enc_response(sec: Security, aa_frame: bytes) -> bytes:
     return bytes(pkt)
 
 
-def _status_aa() -> bytes:
+def _status_aa(msg_type: int = 0x03) -> bytes:
     body = bytearray(46)
     body[0] = 0x08
     body[1] = 0x03
-    return assemble_frame(bytes(body), 0x02)
+    return assemble_frame(bytes(body), msg_type)
 
 
 def _patch_socket(monkeypatch: pytest.MonkeyPatch, fake: FakeSocket) -> list[object]:
@@ -147,7 +155,7 @@ def test_connect_handshake_and_request_roundtrip(monkeypatch: pytest.MonkeyPatch
     # the handshake request went out and starts with the 8370 magic
     assert fake.sent[:2] == b"\x83\x70"
 
-    reply = t(b"\xaa\x0b\xe1" + b"\x00" * 8 + b"\x03\x00\x11")
+    reply = t(QUERY_AA)
     assert reply == _status_aa()
     # TX handshake, RX handshake, TX request, RX response
     directions = [d for d, _ in on_wire]
@@ -160,7 +168,7 @@ def test_context_manager_connects_and_closes(monkeypatch: pytest.MonkeyPatch) ->
     _patch_socket(monkeypatch, fake)
 
     with V3Transport("10.0.0.5", DEVICE_ID, TOKEN, KEY) as t:
-        assert t(b"\xaa\x0b\xe1" + b"\x00" * 8 + b"\x03\x00\x11") == _status_aa()
+        assert t(QUERY_AA) == _status_aa()
     assert fake.closed is True
 
 
@@ -228,7 +236,7 @@ def test_call_skips_non_enc_resp_frames(monkeypatch: pytest.MonkeyPatch) -> None
 
     t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
     t.connect()
-    assert t(b"\xaa\x0b\xe1" + b"\x00" * 8 + b"\x03\x00\x11") == _status_aa()
+    assert t(QUERY_AA) == _status_aa()
 
 
 def test_recv_exact_reassembles_fragmented_chunks() -> None:
@@ -318,3 +326,95 @@ def test_recv_timeout_raises_v3error() -> None:
     with pytest.raises(V3Error, match="Failed to read response") as excinfo:
         t._recv_exact(4)
     assert isinstance(excinfo.value.__cause__, TimeoutError)
+
+
+def _session_with_replies(
+    monkeypatch: pytest.MonkeyPatch, *frames: bytes, silent_when_drained: bool = False
+) -> tuple[V3Transport, FakeSocket]:
+    """Connect a transport whose device answers with the given AA frames, in order."""
+    plain = os.urandom(32)
+    sec = Security()
+    sec.authenticate(_handshake_response(plain), KEY)
+    inbound = _handshake_response(plain) + b"".join(_enc_response(sec, f) for f in frames)
+    fake = FakeSocket(inbound, silent_when_drained=silent_when_drained)
+    _patch_socket(monkeypatch, fake)
+    t = V3Transport("1.2.3.4", DEVICE_ID, TOKEN, KEY)
+    t.connect()
+    return t, fake
+
+
+def test_query_skips_the_connect_push(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A real device pushes its status (0x04) on connect before the 0x03 reply."""
+    reply = _status_aa(0x03)
+    t, _ = _session_with_replies(monkeypatch, _status_aa(0x04), reply)
+    assert t(QUERY_AA) == reply
+
+
+def test_query_falls_back_to_the_push_when_the_reply_is_dropped(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The machine drops some 0x03 replies; the push carries the same status."""
+    push = _status_aa(0x04)
+    t, fake = _session_with_replies(monkeypatch, push, silent_when_drained=True)
+    assert t(QUERY_AA) == push
+    # the wait after the push is the short grace, not the full timeout
+    assert fake.timeout <= 1.0
+
+
+def test_query_without_any_status_still_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With no push to fall back on, a silent device is a timeout."""
+    t, _ = _session_with_replies(monkeypatch, silent_when_drained=True)
+    with pytest.raises(V3Error, match="Failed to read response") as excinfo:
+        t(QUERY_AA)
+    assert isinstance(excinfo.value.__cause__, TimeoutError)
+
+
+def test_control_does_not_take_the_push_as_its_ack(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A control never falls back to the push: the command may not be applied."""
+    t, _ = _session_with_replies(monkeypatch, _status_aa(0x04), silent_when_drained=True)
+    with pytest.raises(V3Error, match="Failed to read response"):
+        t(CONTROL_AA)
+
+
+def test_query_skips_frames_that_carry_no_status(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A stray control ack is not a status, so a query keeps reading."""
+    reply = _status_aa(0x03)
+    t, _ = _session_with_replies(monkeypatch, _status_aa(0x02), reply)
+    assert t(QUERY_AA) == reply
+
+
+def test_control_waits_for_its_ack_past_pushes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Captured power_off session: push, 0x02 ack, then the push with the new state."""
+    ack = _status_aa(0x02)
+    t, fake = _session_with_replies(monkeypatch, _status_aa(0x04), ack, _status_aa(0x04))
+    assert t(CONTROL_AA) == ack
+    # the trailing push stays unread instead of being taken for the answer
+    assert fake.recv(1) != b""
+
+
+def test_reply_without_aa_header_is_returned_as_is(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A reply that is not an AA frame is handed to the caller to judge."""
+    t, _ = _session_with_replies(monkeypatch, b"\x00\x01\x02")
+    assert t(QUERY_AA) == b"\x00\x01\x02"
+
+
+def test_non_aa_request_returns_first_reply(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without a request type to match, the first ENC_RESP is the answer."""
+    push = _status_aa(0x04)
+    t, _ = _session_with_replies(monkeypatch, push, _status_aa(0x03))
+    assert t(b"raw") == push
+
+
+def test_wait_for_reply_is_bounded_by_the_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pushes only, as a device sends to a wrong device_id, must not wait forever."""
+    pushes = [_status_aa(0x04)] * 5
+    t, fake = _session_with_replies(monkeypatch, *pushes)
+    clock = iter([0.0, 4.0, 8.0, 12.0])
+    monkeypatch.setattr(
+        "midea_dishwasher_api.transport.v3_transport.time.monotonic", lambda: next(clock)
+    )
+    with pytest.raises(V3Error, match="no matching reply in time") as excinfo:
+        t(CONTROL_AA)
+    # a TimeoutError cause lets callers tell a silent device from bad credentials
+    assert isinstance(excinfo.value.__cause__, TimeoutError)
+    assert fake.timeout == pytest.approx(2.0)

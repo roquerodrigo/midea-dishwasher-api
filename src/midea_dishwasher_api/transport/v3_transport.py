@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import logging
 import socket
+import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Self
 
+from ..enums import MsgType
+from ..protocol import FRAME_HEADER_LEN, SYNC
 from ..security import (
     KEY_LEN,
     MAGIC,
@@ -28,10 +31,19 @@ log: logging.Logger = logging.getLogger("midea_dishwasher_api.transport")
 
 OnWireCallback = Callable[[str, bytes], None]
 
+QUERY_REPLY_GRACE = 1.0
+
 
 def _noop_on_wire(_direction: str, _data: bytes) -> None:
     """Drop wire traces when the caller asked for none."""
     return
+
+
+def _aa_msg_type(frame: bytes) -> int | None:
+    """Return the message type of an AA frame, or None when it carries none."""
+    if len(frame) < FRAME_HEADER_LEN or frame[0] != SYNC:
+        return None
+    return frame[FRAME_HEADER_LEN - 1]
 
 
 class V3Transport:
@@ -111,7 +123,47 @@ class V3Transport:
         self._on_wire("TX", request)
         self._send_all(request)
 
+        request_type = _aa_msg_type(frame)
+        # The machine pushes its status (0x04) as soon as a session opens and
+        # every few seconds after, to any client, even one with a wrong
+        # device_id. Taking that push as the answer closed the session before
+        # a control frame was applied, so a control waits for its own ack. The
+        # machine drops some 0x03 query replies, though, and the push is a full
+        # status: a query waits a short grace for its reply, then takes the push.
+        deadline = time.monotonic() + self._timeout
+        push: bytes | None = None
         while True:
+            try:
+                reply = self._recv_reply(deadline)
+            except V3Error as error:
+                if push is not None and isinstance(error.__cause__, TimeoutError):
+                    log.debug("no reply to the query, answering with the status push")
+                    return push
+                raise
+            reply_type = _aa_msg_type(reply)
+            if request_type is None or reply_type in {request_type, None}:
+                return reply
+            if request_type == MsgType.QUERY and reply_type == MsgType.PUSH:
+                if push is None:
+                    deadline = min(deadline, time.monotonic() + QUERY_REPLY_GRACE)
+                push = reply
+                continue
+            log.debug(
+                "ignoring AA frame of type 0x%02x while waiting for type 0x%02x",
+                reply_type,
+                request_type,
+            )
+
+    def _recv_reply(self, deadline: float) -> bytes:
+        """Return the next AA frame the device sends, failing once the deadline passes."""
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                msg = "Failed to read response: no matching reply in time"
+                raise V3Error(msg) from TimeoutError()
+            # The pushes keep arriving every few seconds, so the per-recv
+            # socket timeout alone would never fire; bound the whole wait.
+            self._connected_socket().settimeout(remaining)
             packet = self._recv_packet()
             self._on_wire("RX", packet)
             msg_type, v2_body = self._security.decode(packet)
