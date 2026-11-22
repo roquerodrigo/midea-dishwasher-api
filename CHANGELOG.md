@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.0.1](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v2.0.0...v2.0.1) (2026-11-22)
+
+Commands and queries now wait for the dishwasher's actual reply, so lost commands and undetected wrong device IDs are fixed.
+
+### Improvements
+
+- Commands now take about 0.7 seconds because they wait for the acknowledgement, and raise V3Error with a TimeoutError cause when none arrives in time. ([#81](https://github.com/roquerodrigo/midea-dishwasher-api/pull/81))
+
+### Bug fixes
+
+- Commands sent to the dishwasher now wait for the machine's own acknowledgement instead of treating its unsolicited status push as the answer, so commands are no longer lost and a wrong device ID raises an error. ([#81](https://github.com/roquerodrigo/midea-dishwasher-api/pull/81))
+- Queries now wait for their own reply, falling back to the status push after a short grace period, and the whole wait is bounded by the configured timeout. ([#81](https://github.com/roquerodrigo/midea-dishwasher-api/pull/81))
+- Updated the cryptography dependency to version 50.0.2. ([#67](https://github.com/roquerodrigo/midea-dishwasher-api/pull/67))
+
 ## [2.0.0](https://github.com/roquerodrigo/midea-dishwasher-api/compare/v1.3.6...v2.0.0) (2026-09-17)
 
 
