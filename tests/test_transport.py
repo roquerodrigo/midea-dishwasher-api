@@ -7,6 +7,7 @@ an 8370 handshake response (type=1) and an ENC_RESP (type=3) carrying a V2
 
 from __future__ import annotations
 
+import itertools
 import os
 import socket
 from hashlib import sha256
@@ -409,7 +410,7 @@ def test_wait_for_reply_is_bounded_by_the_timeout(monkeypatch: pytest.MonkeyPatc
     """Pushes only, as a device sends to a wrong device_id, must not wait forever."""
     pushes = [_status_aa(0x04)] * 5
     t, fake = _session_with_replies(monkeypatch, *pushes)
-    clock = iter([0.0, 4.0, 8.0, 12.0])
+    clock = itertools.count(start=0.0, step=4.0)
     monkeypatch.setattr(
         "midea_dishwasher_api.transport.v3_transport.time.monotonic", lambda: next(clock)
     )

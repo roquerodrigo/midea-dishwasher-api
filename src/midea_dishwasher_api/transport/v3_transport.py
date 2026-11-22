@@ -9,7 +9,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Self
 
 from ..enums import MsgType
-from ..protocol import FRAME_HEADER_LEN, SYNC
+from ..protocol import FrameError, parse_frame
 from ..security import (
     KEY_LEN,
     MAGIC,
@@ -31,7 +31,7 @@ log: logging.Logger = logging.getLogger("midea_dishwasher_api.transport")
 
 OnWireCallback = Callable[[str, bytes], None]
 
-QUERY_REPLY_GRACE = 1.0
+_QUERY_REPLY_GRACE = 1.0
 
 
 def _noop_on_wire(_direction: str, _data: bytes) -> None:
@@ -40,10 +40,12 @@ def _noop_on_wire(_direction: str, _data: bytes) -> None:
 
 
 def _aa_msg_type(frame: bytes) -> int | None:
-    """Return the message type of an AA frame, or None when it carries none."""
-    if len(frame) < FRAME_HEADER_LEN or frame[0] != SYNC:
+    """Return the message type of an AA frame, or None when the frame is not one."""
+    try:
+        msg_type, _body = parse_frame(frame)
+    except FrameError:
         return None
-    return frame[FRAME_HEADER_LEN - 1]
+    return msg_type
 
 
 class V3Transport:
@@ -123,13 +125,12 @@ class V3Transport:
         self._on_wire("TX", request)
         self._send_all(request)
 
-        request_type = _aa_msg_type(frame)
-        # The machine pushes its status (0x04) as soon as a session opens and
-        # every few seconds after, to any client, even one with a wrong
-        # device_id. Taking that push as the answer closed the session before
-        # a control frame was applied, so a control waits for its own ack. The
-        # machine drops some 0x03 query replies, though, and the push is a full
-        # status: a query waits a short grace for its reply, then takes the push.
+        return self._await_answer(_aa_msg_type(frame))
+
+    def _await_answer(self, request_type: int | None) -> bytes:
+        """Return the reply matching the request type, or the status push for a query."""
+        # The machine pushes its status (0x04) unsolicited, even to a wrong
+        # device_id, and drops some 0x03 query replies.
         deadline = time.monotonic() + self._timeout
         push: bytes | None = None
         while True:
@@ -145,7 +146,7 @@ class V3Transport:
                 return reply
             if request_type == MsgType.QUERY and reply_type == MsgType.PUSH:
                 if push is None:
-                    deadline = min(deadline, time.monotonic() + QUERY_REPLY_GRACE)
+                    deadline = min(deadline, time.monotonic() + _QUERY_REPLY_GRACE)
                 push = reply
                 continue
             log.debug(
@@ -161,8 +162,7 @@ class V3Transport:
             if remaining <= 0:
                 msg = "Failed to read response: no matching reply in time"
                 raise V3Error(msg) from TimeoutError()
-            # The pushes keep arriving every few seconds, so the per-recv
-            # socket timeout alone would never fire; bound the whole wait.
+            # Periodic pushes would keep a per-recv timeout from ever firing.
             self._connected_socket().settimeout(remaining)
             packet = self._recv_packet()
             self._on_wire("RX", packet)
